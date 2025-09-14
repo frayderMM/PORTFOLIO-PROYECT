@@ -1,23 +1,28 @@
 <template>
   <footer class="site-footer" role="contentinfo">
-    <!-- Botón ir arriba (accesible con teclado) -->
-    <button class="to-top" type="button" aria-label="Ir al inicio" @click="scrollTo('inicio')">
+    <!-- Botón ir arriba -->
+    <button
+      class="to-top"
+      type="button"
+      :aria-label="$t('footer.goTop')"
+      @click="scrollTo('inicio')"
+    >
       <i class="fa-solid fa-angles-up" aria-hidden="true"></i>
     </button>
 
     <!-- Redes sociales -->
-    <nav class="social" aria-label="Redes sociales">
+    <nav class="social" :aria-label="$t('footer.socialNav')">
       <ul>
         <li>
           <a
             href="https://web.facebook.com/profile.php?id=61559889902327"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Facebook"
-            title="Facebook"
+            :aria-label="$t('footer.socials.facebook')"
+            :title="$t('footer.socials.facebook')"
           >
             <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
-            <span class="sr-only">Facebook</span>
+            <span class="sr-only">{{ $t('footer.socials.facebook') }}</span>
           </a>
         </li>
         <li>
@@ -25,11 +30,11 @@
             href="https://x.com/FrayderMeza"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="X (Twitter)"
-            title="X (Twitter)"
+            :aria-label="$t('footer.socials.x')"
+            :title="$t('footer.socials.x')"
           >
             <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
-            <span class="sr-only">X (Twitter)</span>
+            <span class="sr-only">{{ $t('footer.socials.x') }}</span>
           </a>
         </li>
         <li>
@@ -37,11 +42,11 @@
             href="https://www.instagram.com/bray_aa_nn/"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Instagram"
-            title="Instagram"
+            :aria-label="$t('footer.socials.instagram')"
+            :title="$t('footer.socials.instagram')"
           >
             <i class="fa-brands fa-instagram" aria-hidden="true"></i>
-            <span class="sr-only">Instagram</span>
+            <span class="sr-only">{{ $t('footer.socials.instagram') }}</span>
           </a>
         </li>
         <li>
@@ -49,11 +54,11 @@
             href="https://www.linkedin.com/in/frayder/"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="LinkedIn"
-            title="LinkedIn"
+            :aria-label="$t('footer.socials.linkedin')"
+            :title="$t('footer.socials.linkedin')"
           >
             <i class="fa-brands fa-linkedin-in" aria-hidden="true"></i>
-            <span class="sr-only">LinkedIn</span>
+            <span class="sr-only">{{ $t('footer.socials.linkedin') }}</span>
           </a>
         </li>
         <li>
@@ -61,17 +66,19 @@
             href="https://github.com/frayderMM"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="GitHub"
-            title="GitHub"
+            :aria-label="$t('footer.socials.github')"
+            :title="$t('footer.socials.github')"
           >
             <i class="fa-brands fa-github" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span>
+            <span class="sr-only">{{ $t('footer.socials.github') }}</span>
           </a>
         </li>
       </ul>
     </nav>
 
-    <p class="smallprint">© {{ new Date().getFullYear() }} Frayder Meza</p>
+    <p class="smallprint">
+      {{ $t('footer.copyrightPrefix', { year: new Date().getFullYear(), name: 'Frayder Meza' }) }}
+    </p>
   </footer>
 </template>
 

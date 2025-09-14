@@ -2,34 +2,50 @@
   <div class="void">
     <div class="crop">
       <ul id="card-list" :style="{ '--count': cursos.length }">
-        <li v-for="(curso, index) in cursos" :key="index" :style="getAnimationDelay(index)">
-          <div class="card" :style="getAnimationDelay(index)" @click="seleccionarCurso(curso)">
-            <span class="model-name">Curso {{ index + 1 }}</span>
-            <span>{{ curso }}</span>
+        <li v-for="(id, index) in cursos" :key="index" :style="getAnimationDelay(index)">
+          <div class="card" :style="getAnimationDelay(index)" @click="seleccionarCurso(id)">
+            <span class="model-name">{{ $t('curriculumEdu.courseLabel', { n: index + 1 }) }}</span>
+            <span>{{ $t(`curriculumEdu.courses.${id}.name`) }}</span>
             <span class="seleccion-icono">✔</span>
-            <!-- icono de selección -->
           </div>
         </li>
       </ul>
       <div class="last-circle"></div>
       <div class="second-circle"></div>
     </div>
+
     <div class="mask">
       <div v-if="cursoSeleccionado" class="contenido-curso">
         <div class="contenido-header">
-          <h2>{{ cursoSeleccionado }}</h2>
-          <button class="cerrar" @click="cursoSeleccionado = null">✕</button>
+          <h2>{{ $t(`curriculumEdu.courses.${cursoSeleccionado}.name`) }}</h2>
+          <button
+            class="cerrar"
+            @click="cursoSeleccionado = null"
+            :aria-label="$t('curriculumEdu.close')"
+          >
+            ✕
+          </button>
         </div>
-        <p>{{ descripcionesCurso[cursoSeleccionado] || 'Descripción no disponible.' }}</p>
+        <p>
+          {{
+            $t(
+              `curriculumEdu.courses.${cursoSeleccionado}.desc`,
+              {},
+              { default: $t('curriculumEdu.noDescription') },
+            )
+          }}
+        </p>
       </div>
     </div>
 
     <div class="center-circle">
-      <div class="circle-label">Ciclo</div>
+      <div class="circle-label">{{ $t('curriculumEdu.cycle') }}</div>
       <div class="carousel-controls">
-        <span class="arrow" @click="cambiarCiclo(-1)">‹</span>
+        <span class="arrow" @click="cambiarCiclo(-1)" :aria-label="$t('curriculumEdu.prev')"
+          >‹</span
+        >
         <span>{{ cicloActual }}</span>
-        <span class="arrow" @click="cambiarCiclo(1)">›</span>
+        <span class="arrow" @click="cambiarCiclo(1)" :aria-label="$t('curriculumEdu.next')">›</span>
       </div>
     </div>
   </div>
@@ -37,236 +53,101 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+// import { useI18n } from 'vue-i18n'
+
+// const { t } = useI18n()
 
 const cicloActual = ref(1)
-const descripcionesCurso = {
-  // Ciclo 1
-  'Lectura y Redacción':
-    'Aprende a escribir ensayos, artículos y textos argumentativos de forma clara y coherente.',
-  'Pre Cálculo': 'Fundamentos matemáticos esenciales para cursar cálculo diferencial e integral.',
-  'Administración General':
-    'Introduce los principios básicos de la administración en organizaciones modernas.',
-  'Globalización y Realidad Nacional':
-    'Analiza los efectos de la globalización en el contexto político, económico y social del país.',
-  'Estrategias de Aprendizaje':
-    'Desarrolla técnicas efectivas para mejorar el rendimiento académico y personal.',
-  'Habilidades Actitudinales':
-    'Fortalece habilidades blandas como trabajo en equipo, liderazgo y comunicación asertiva.',
-  'Basic English (*)':
-    'Curso básico de inglés enfocado en comprensión oral y escrita en situaciones cotidianas.',
+const cursoSeleccionado = ref(null)
 
-  // Ciclo 2
-  'Comunicación y literatura I':
-    'Explora géneros literarios y técnicas de análisis crítico de textos.',
-  'Cálculo I': 'Estudia límites, derivadas y aplicaciones básicas del cálculo diferencial.',
-  'Contabilidad General': 'Aprende los principios fundamentales de la contabilidad financiera.',
-  'Estadística y Probabilidades':
-    'Introduce conceptos de estadística descriptiva y teoría de probabilidades.',
-  'Física I': 'Estudia mecánica clásica y leyes fundamentales del movimiento.',
-  'Fundamentos de Programación':
-    'Aprende lógica computacional y programación estructurada con un lenguaje de alto nivel.',
-  'Intermediate English I':
-    'Curso intermedio de inglés con énfasis en lectura, vocabulario y conversación.',
-
-  // Ciclo 3
-  'Comunicación y literatura II':
-    'Analiza textos complejos y desarrolla habilidades avanzadas de escritura crítica.',
-  'Cálculo II': 'Introduce el cálculo integral, técnicas de integración y sus aplicaciones.',
-  'Base de Datos': 'Diseña e implementa bases de datos relacionales utilizando SQL.',
-  'Introducción a la Ciencia de Datos':
-    'Explora los fundamentos y aplicaciones de la ciencia de datos.',
-  'Fundamentos de lógica':
-    'Estudia lógica proposicional, lógica de predicados y razonamiento lógico.',
-  'Algoritmos y estructura de datos':
-    'Aprende a diseñar algoritmos eficientes y a utilizar estructuras de datos fundamentales.',
-  'Intermediate English II':
-    'Refuerza habilidades intermedias del idioma inglés con enfoque comunicativo.',
-
-  // Ciclo 4
-  'Marketing para Ingeniería':
-    'Comprende el rol del marketing en el desarrollo de productos tecnológicos.',
-  'Costos y Presupuestos':
-    'Aprende a calcular y controlar los costos en proyectos empresariales y tecnológicos.',
-  'Álgebra lineal I':
-    'Introduce matrices, vectores, transformaciones lineales y sistemas de ecuaciones.',
-  'Estadística Inferencial':
-    'Estudia métodos para inferir conclusiones a partir de datos muestrales.',
-  'Arquitectura del computador I':
-    'Conoce la estructura interna y funcionamiento del hardware computacional.',
-  'Programación Orientada a Objetos':
-    'Diseña software modular aplicando principios de orientación a objetos.',
-  'Intermediate English III':
-    'Curso final intermedio de inglés con énfasis en escritura académica y presentación oral.',
-
-  // Ciclo 5
-  'Investigación operativa I':
-    'Modela y resuelve problemas de optimización aplicando programación lineal.',
-  'Matemática Discreta':
-    'Estudia estructuras matemáticas como grafos, conjuntos y funciones discretas.',
-  'Ingeniería de software I':
-    'Introduce el ciclo de vida del software y metodologías de desarrollo ágil.',
-  'Análisis Multivariado I': 'Aplica técnicas estadísticas a datos con múltiples variables.',
-  'Sistemas operativos I':
-    'Explora conceptos como procesos, memoria, archivos y sistemas multitarea.',
-  'Análisis y Diseño de Algoritmos':
-    'Desarrolla algoritmos eficientes y analiza su complejidad computacional.',
-
-  // Ciclo 6
-  'Metodología de la Investigación':
-    'Diseña proyectos de investigación científica con enfoque académico y técnico.',
-  'Gestión Financiera':
-    'Analiza decisiones financieras en empresas basadas en riesgos y rentabilidad.',
-  'Inteligencia Artificial':
-    'Introduce técnicas como machine learning, lógica difusa y redes neuronales.',
-  'Análisis Multivariado II':
-    'Profundiza en métodos multivariantes para análisis de datos complejos.',
-  'Redes de Comunicaciones':
-    'Estudia protocolos, arquitecturas y funcionamiento de redes de datos.',
-  'Ingeniería de Procesos de Negocios':
-    'Optimiza procesos empresariales mediante técnicas de modelado y rediseño.',
-
-  // Ciclo 7
-  'Planeación Estratégica':
-    'Define estrategias organizacionales alineadas con la misión y visión empresarial.',
-  'Inteligencia Artificial Avanzada':
-    'Explora técnicas avanzadas como deep learning y algoritmos genéticos.',
-  'Computación Gráfica': 'Genera e interpreta gráficos computacionales en 2D y 3D.',
-  'Minería de Datos': 'Descubre patrones útiles en grandes volúmenes de datos.',
-  Robótica: 'Diseña, programa y controla robots aplicando sensores y actuadores.',
-  'Computación paralela':
-    'Estudia arquitecturas y algoritmos para procesamiento simultáneo de datos.',
-
-  // Ciclo 8
-  'Gestión y Desarrollo de la Innovación y Ética':
-    'Promueve la innovación tecnológica bajo principios éticos y sostenibles.',
-  Entrepreneurship: 'Desarrolla competencias para emprender proyectos tecnológicos y de negocio.',
-  'Desarrollo de Aplicaciones web':
-    'Crea aplicaciones web dinámicas utilizando frameworks modernos.',
-  'Minería de Datos Avanzada':
-    'Aplica minería de datos a problemas específicos con algoritmos avanzados.',
-  'Diseño y evaluación de proyectos':
-    'Diseña y evalúa proyectos tecnológicos desde el punto de vista técnico y financiero.',
-  'Big Data Analytics': 'Analiza grandes volúmenes de datos para obtener información estratégica.',
-  'Electivo de especialidad I':
-    'Curso electivo que permite profundizar en un área de especialización técnica.',
-
-  // Ciclo 9
-  'Inteligencia De Negocios':
-    'Convierte datos en conocimiento para la toma de decisiones empresariales.',
-  'Computación en la nube': 'Utiliza servicios cloud para desarrollo y despliegue de aplicaciones.',
-  'Trabajo de Tesis I':
-    'Primera fase del desarrollo de tesis de grado, centrada en planteamiento del problema y metodología.',
-  'Desarrollo de Aplicaciones Móviles':
-    'Diseña apps para Android y/o iOS utilizando herramientas modernas.',
-  'Analítica de la web':
-    'Mide y analiza el comportamiento de usuarios en sitios y plataformas digitales.',
-  'Project Management': 'Aplica metodologías de gestión de proyectos como PMBOK y Scrum.',
-  'Electivo de especialidad II':
-    'Segundo curso electivo enfocado en una línea profesional específica.',
-
-  // Ciclo 10
-  'Knowledge Management':
-    'Gestiona el conocimiento organizacional para fomentar la innovación y aprendizaje.',
-  'Sistemas de Gestión de Seguridad de Información':
-    'Implementa sistemas de seguridad de la información basados en normas ISO.',
-  'Sistemas de Información Gerencial':
-    'Estudia sistemas que apoyan la gestión y toma de decisiones empresariales.',
-  'Information Technology Management':
-    'Administra recursos tecnológicos en alineación con los objetivos del negocio.',
-  'Enterprise Architecture Management':
-    'Diseña arquitecturas empresariales que integran procesos, sistemas y tecnologías.',
-  'Electivo de especialidad III': 'Curso avanzado para fortalecer la especialización elegida.',
-  'Trabajo de Tesis II':
-    'Etapa final de la tesis enfocada en desarrollo, resultados y sustentación.',
-}
-
+// Mapa de cursos por ciclo usando IDs (slugs)
 const cursosPorCiclo = {
   1: [
-    'Lectura y Redacción',
-    'Pre Cálculo',
-    'Administración General',
-    'Globalización y Realidad Nacional',
-    'Estrategias de Aprendizaje',
-    'Habilidades Actitudinales',
-    'Basic English (*)',
+    'lectura_redaccion',
+    'pre_calculo',
+    'administracion_general',
+    'globalizacion_realidad_nacional',
+    'estrategias_aprendizaje',
+    'habilidades_actitudinales',
+    'basic_english',
   ],
   2: [
-    'Comunicación y literatura I',
-    'Cálculo I',
-    'Contabilidad General',
-    'Estadística y Probabilidades',
-    'Física I',
-    'Fundamentos de Programación',
-    'Intermediate English I',
+    'comunicacion_literatura_i',
+    'calculo_i',
+    'contabilidad_general',
+    'estadistica_probabilidades',
+    'fisica_i',
+    'fundamentos_programacion',
+    'intermediate_english_i',
   ],
   3: [
-    'Comunicación y literatura II',
-    'Cálculo II',
-    'Base de Datos',
-    'Introducción a la Ciencia de Datos',
-    'Fundamentos de lógica',
-    'Algoritmos y estructura de datos',
-    'Intermediate English II',
+    'comunicacion_literatura_ii',
+    'calculo_ii',
+    'base_datos',
+    'intro_ciencia_datos',
+    'fundamentos_logica',
+    'algoritmos_estructura_datos',
+    'intermediate_english_ii',
   ],
   4: [
-    'Marketing para Ingeniería',
-    'Costos y Presupuestos',
-    'Álgebra lineal I',
-    'Estadística Inferencial',
-    'Arquitectura del computador I',
-    'Programación Orientada a Objetos',
-    'Intermediate English III',
+    'marketing_ingenieria',
+    'costos_presupuestos',
+    'algebra_lineal_i',
+    'estadistica_inferencial',
+    'arquitectura_computador_i',
+    'programacion_oo',
+    'intermediate_english_iii',
   ],
   5: [
-    'Investigación operativa I',
-    'Matemática Discreta',
-    'Ingeniería de software I',
-    'Análisis Multivariado I',
-    'Sistemas operativos I',
-    'Análisis y Diseño de Algoritmos',
+    'investigacion_operativa_i',
+    'matematica_discreta',
+    'ingenieria_software_i',
+    'analisis_multivariado_i',
+    'sistemas_operativos_i',
+    'analisis_diseno_algoritmos',
   ],
   6: [
-    'Metodología de la Investigación',
-    'Gestión Financiera',
-    'Inteligencia Artificial',
-    'Análisis Multivariado II',
-    'Redes de Comunicaciones',
-    'Ingeniería de Procesos de Negocios',
+    'metodologia_investigacion',
+    'gestion_financiera',
+    'inteligencia_artificial',
+    'analisis_multivariado_ii',
+    'redes_comunicaciones',
+    'ingenieria_procesos_negocio',
   ],
   7: [
-    'Planeación Estratégica',
-    'Inteligencia Artificial Avanzada',
-    'Computación Gráfica',
-    'Minería de Datos',
-    'Robótica',
-    'Computación paralela',
+    'planeacion_estrategica',
+    'ia_avanzada',
+    'computacion_grafica',
+    'mineria_datos',
+    'robotica',
+    'computacion_paralela',
   ],
   8: [
-    'Gestión y Desarrollo de la Innovación y Ética',
-    'Entrepreneurship',
-    'Desarrollo de Aplicaciones web',
-    'Minería de Datos Avanzada',
-    'Diseño y evaluación de proyectos',
-    'Big Data Analytics',
-    'Electivo de especialidad I',
+    'gestion_innovacion_etica',
+    'entrepreneurship',
+    'desarrollo_web',
+    'mineria_datos_avanzada',
+    'diseno_evaluacion_proyectos',
+    'big_data_analytics',
+    'electivo_especialidad_i',
   ],
   9: [
-    'Inteligencia De Negocios',
-    'Computación en la nube',
-    'Trabajo de Tesis I',
-    'Desarrollo de Aplicaciones Móviles',
-    'Analítica de la web',
-    'Project Management',
-    'Electivo de especialidad II',
+    'inteligencia_negocios',
+    'computacion_nube',
+    'tesis_i',
+    'desarrollo_moviles',
+    'analitica_web',
+    'project_management',
+    'electivo_especialidad_ii',
   ],
   10: [
-    'Knowledge Management',
-    'Sistemas de Gestión de Seguridad de Información',
-    'Sistemas de Información Gerencial',
-    'Information Technology Management',
-    'Enterprise Architecture Management',
-    'Electivo de especialidad III',
-    'Trabajo de Tesis II',
+    'knowledge_management',
+    'sgsi',
+    'sistemas_informacion_gerencial',
+    'it_management',
+    'enterprise_architecture_management',
+    'electivo_especialidad_iii',
+    'tesis_ii',
   ],
 }
 
@@ -283,14 +164,12 @@ function getAnimationDelay(index) {
     animationDelay: `calc((var(--rotate-speed)/var(--count)) * -${index}s)`,
   }
 }
-const cursoSeleccionado = ref(null)
 
-function seleccionarCurso(nombreCurso) {
-  cursoSeleccionado.value = nombreCurso
+function seleccionarCurso(id) {
+  cursoSeleccionado.value = id
 }
 </script>
 
-<!-- 🌐 Variables globales visibles en todo el DOM -->
 <style>
 :root {
   --rotate-speed: 40;
@@ -298,8 +177,6 @@ function seleccionarCurso(nombreCurso) {
   --easing: cubic-bezier(0, 0.37, 1, 0.63);
 }
 </style>
-
-<!-- 🎨 Estilos del componente con scope -->
 
 <style scoped>
 .void {
@@ -504,7 +381,6 @@ li {
   max-height: 40%;
   padding: 20px 24px;
   box-sizing: border-box;
-  /* background: linear-gradient(to bottom, rgba(12, 16, 27, 0.95), rgba(0, 191, 255, 0.05)); */
   color: #ffffff;
   font-family: inherit;
   display: flex;
@@ -516,7 +392,6 @@ li {
   pointer-events: auto;
   animation: slideFadeIn 0.5s ease-out forwards;
   backdrop-filter: blur(6px);
-  /* border-right: 1px solid rgba(0, 191, 255, 0.2); */
   overflow: hidden;
 }
 
@@ -561,7 +436,7 @@ li {
 .seleccion-icono {
   margin-left: auto;
   font-size: 18px;
-  color: #00ff88; /* verde de selección */
+  color: #00ff88;
   opacity: 0;
   transform: scale(0.8);
   transition:

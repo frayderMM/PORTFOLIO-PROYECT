@@ -1,21 +1,34 @@
 <template>
   <div class="derecha">
-    <h3>Experiencia</h3>
+    <!-- Usa la clave del padre o crea una local -->
+    <h3>{{ $t('curriculum.experience') }}</h3>
 
     <div class="carrusel">
-      <button class="nav-btn" @click="prevItem" :disabled="indiceActual === 0">‹</button>
+      <button
+        class="nav-btn"
+        @click="prevItem"
+        :disabled="indiceActual === 0"
+        :aria-label="$t('curriculumExp.prev')"
+      >
+        ‹
+      </button>
 
       <div class="item der">
-        <h4>{{ experiencia[indiceActual].titulo }}</h4>
-        <span class="casa">{{ experiencia[indiceActual].empresa }}</span>
-        <span class="fecha">{{ experiencia[indiceActual].fecha }}</span>
-        <p>{{ experiencia[indiceActual].descripcion }}</p>
+        <h4>{{ $t(`curriculumExp.items.${currentId}.title`) }}</h4>
+        <span class="casa">{{ $t(`curriculumExp.items.${currentId}.company`) }}</span>
+        <span class="fecha">{{ $t(`curriculumExp.items.${currentId}.date`) }}</span>
+        <p>{{ $t(`curriculumExp.items.${currentId}.desc`) }}</p>
         <div class="conectord">
           <div class="circulod"></div>
         </div>
       </div>
 
-      <button class="nav-btn" @click="nextItem" :disabled="indiceActual === experiencia.length - 1">
+      <button
+        class="nav-btn"
+        @click="nextItem"
+        :disabled="indiceActual === items.length - 1"
+        :aria-label="$t('curriculumExp.next')"
+      >
         ›
       </button>
     </div>
@@ -23,69 +36,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-const experiencia = [
-  {
-    titulo: 'Plataforma Web PROMCOSER',
-    empresa: 'PROMCOSER',
-    fecha: '2024',
-    descripcion:
-      'Gestión de personal, maquinaria y clientes, con digitalización del "Parte Diario" y reportes interactivos. Tecnologías: Visual Studio, Quasar, SQL Server, Git/GitHub.',
-  },
-  {
-    titulo: 'Rediseño Web',
-    empresa: 'Minsur',
-    fecha: '2025',
-    descripcion:
-      'Sitio oficial con Quasar (Vue) y .NET Core, diseño responsivo e integración de APIs.',
-  },
-  {
-    titulo: 'Sistema de Inventario',
-    empresa: 'Ferretería',
-    fecha: '2024',
-    descripcion: 'Python y SQL Server con API SUNAT para validación de datos en tiempo real.',
-  },
-  {
-    titulo: 'Software de Criptografía',
-    empresa: 'Proyecto personal',
-    fecha: '2025',
-    descripcion:
-      'Java con 5 algoritmos (CSRD, NSRPQ, Transposición Columnar, Vigenère y XOR), en ejecución serial y paralela.',
-  },
-  {
-    titulo: 'Macro Excel VBA – Libros Electrónicos',
-    empresa: 'Cooperativa Cafetalera Inkawasi',
-    fecha: '2024',
-    descripcion:
-      'Automatización para generar TXT del Registro de Activos Fijos y envío a SUNAT vía PLE.',
-  },
-  {
-    titulo: 'Dashboard de Ventas',
-    empresa: 'Cooperativa Cafetalera Inkawasi',
-    fecha: '2025',
-    descripcion: 'Control y análisis de ventas por lote en Excel.',
-  },
-  {
-    titulo: 'Portafolio Personal',
-    empresa: 'Proyecto personal',
-    fecha: '2025',
-    descripcion: 'Sitio web en Vue/Quasar, HTML, CSS y JS, publicado en Netlify.',
-  },
+// Lista por ID (sin textos hardcodeados)
+const items = [
+  { id: 'promcoser_platform' },
+  { id: 'minsur_website_redesign' },
+  { id: 'inventory_system' },
+  { id: 'crypto_software' },
+  { id: 'excel_vba_books' },
+  { id: 'sales_dashboard' },
+  { id: 'personal_portfolio' },
 ]
 
 const indiceActual = ref(0)
+const currentId = computed(() => items[indiceActual.value]?.id ?? items[0].id)
 
 const nextItem = () => {
-  if (indiceActual.value < experiencia.length - 1) {
-    indiceActual.value++
-  }
+  if (indiceActual.value < items.length - 1) indiceActual.value++
 }
-
 const prevItem = () => {
-  if (indiceActual.value > 0) {
-    indiceActual.value--
-  }
+  if (indiceActual.value > 0) indiceActual.value--
 }
 </script>
 

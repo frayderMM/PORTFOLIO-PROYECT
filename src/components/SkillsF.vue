@@ -1,10 +1,12 @@
 <template>
   <section id="skills" class="skills" ref="skillsSection">
     <div class="contenido-seccion">
-      <h2>Skills</h2>
+      <!-- 🔹 Título principal -->
+      <h2>{{ $t('skills.title') }}</h2>
 
+      <!-- 🔹 Technical Skills -->
       <div class="bloque">
-        <h3>Technical Skills</h3>
+        <h3>{{ $t('skills.techTitle') }}</h3>
         <div class="grid-skills">
           <div
             class="skill clickable"
@@ -24,32 +26,50 @@
           </div>
         </div>
       </div>
-      <!-- Panel dinámico -->
+
+      <!-- 🔹 Panel dinámico -->
       <transition name="fade">
         <div v-if="activeComponent || lastTriedSlug" class="skill-panel">
           <div class="skill-panel-header">
-            <h4 class="skill-panel-title">{{ activeSkillName || 'Detalle' }}</h4>
-            <button class="skill-panel-close" @click="closeSkill" aria-label="Cerrar">×</button>
+            <h4 class="skill-panel-title">
+              {{ activeSkillName || $t('skills.panel.titleFallback') }}
+            </h4>
+            <button
+              class="skill-panel-close"
+              @click="closeSkill"
+              :aria-label="$t('skills.panel.closeAria')"
+            >
+              ×
+            </button>
           </div>
 
           <div class="skill-panel-body">
             <component v-if="activeComponent" :is="activeComponent" />
             <div v-else class="skill-panel-fallback">
               <p>
-                No encontré un componente para
+                {{ $t('skills.panel.notFound1') }}
                 <strong>{{ lastTriedSlug }}</strong
-                >. Crea <code>src/components/TechnicalSkills/{{ lastTriedSlug }}.vue</code>.
+                >.
+                {{ $t('skills.panel.notFound2') }}
+                <code
+                  >{{ $t('skills.panel.pathPrefix') }}{{ lastTriedSlug
+                  }}{{ $t('skills.panel.pathSuffix') }}</code
+                >.
               </p>
             </div>
           </div>
         </div>
       </transition>
 
+      <!-- 🔹 Professional Skills -->
       <div class="bloque">
-        <h3>Professional Skills</h3>
+        <h3>{{ $t('skills.profTitle') }}</h3>
         <div class="grid-skills-1col">
           <div class="skill" v-for="(s, i) in professionalSkills" :key="'p-' + i">
-            <span><i :class="s.icon" class="icono-skill heartbeat"></i> {{ s.name }}</span>
+            <span>
+              <i :class="s.icon" class="icono-skill heartbeat"></i>
+              {{ $t(`skills.prof.items.${s.id}`) }}
+            </span>
             <div class="barra-skill">
               <div class="progreso" :style="{ width: visible ? s.percent : '0%' }">
                 <span>{{ s.percent }}</span>
@@ -68,9 +88,10 @@ import { ref, onMounted, onBeforeUnmount, computed, defineAsyncComponent } from 
 const visible = ref(false)
 const skillsSection = ref(null)
 
+// 🔹 Technical Skills (pueden quedarse en inglés fijo o internacionalizar igual que abajo)
 const technicalSkills = [
-  { name: 'Base de Datos', percent: '87%', icon: 'fas fa-database' },
-  { name: 'Ciencia de Datos', percent: '90%', icon: 'fas fa-chart-line' },
+  { name: 'Data base', percent: '87%', icon: 'fas fa-database' },
+  { name: 'Data Science', percent: '90%', icon: 'fas fa-chart-line' },
   { name: 'Deep Learning', percent: '83%', icon: 'fas fa-brain' },
   { name: 'HTML & CSS', percent: '89%', icon: 'fab fa-html5' },
   { name: 'IA', percent: '88%', icon: 'fas fa-robot' },
@@ -88,15 +109,16 @@ const orderedTechnicalSkills = computed(() =>
   [...technicalSkills].sort((a, b) => a.name.localeCompare(b.name)),
 )
 
+// 🔹 Professional Skills (con IDs para traducción)
 const professionalSkills = [
-  { name: 'Comunicación', percent: '80%', icon: 'fas fa-comments' },
-  { name: 'Creatividad', percent: '99%', icon: 'fas fa-lightbulb' },
-  { name: 'Líder de equipo', percent: '94%', icon: 'fas fa-user-tie' },
-  { name: 'Trabajo en Equipo', percent: '70%', icon: 'fas fa-users' },
-  { name: 'Adaptabilidad', percent: '65%', icon: 'fas fa-sync-alt' },
+  { id: 'communication', percent: '80%', icon: 'fas fa-comments' },
+  { id: 'creativity', percent: '99%', icon: 'fas fa-lightbulb' },
+  { id: 'team_leadership', percent: '94%', icon: 'fas fa-user-tie' },
+  { id: 'teamwork', percent: '70%', icon: 'fas fa-users' },
+  { id: 'adaptability', percent: '65%', icon: 'fas fa-sync-alt' },
 ]
 
-// animación barras
+// Animación barras
 function handleScroll() {
   const top = skillsSection.value?.getBoundingClientRect().top
   if (top && window.innerHeight - top >= 300) {
@@ -107,7 +129,7 @@ function handleScroll() {
 onMounted(() => window.addEventListener('scroll', handleScroll))
 onBeforeUnmount(() => window.removeEventListener('scroll', handleScroll))
 
-// ---- Carga dinámica de componentes
+// ---- Carga dinámica de componentes para detalles técnicos
 const skillModules = import.meta.glob('./TechnicalSkills/*.vue')
 
 const activeSkillName = ref('')

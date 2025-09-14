@@ -1,11 +1,18 @@
 <template>
-  <section id="inicio" style="scroll-margin-top: 100px" class="inicio">
+  <section id="inicio" style="scroll-margin-top: 100px" class="inicio" ref="hero">
+    <!-- Fondo dinámico -->
+    <div class="fondo"></div>
+
+    <!-- Contenido encima -->
     <div class="contenido-banner">
       <div class="contenedor-img">
         <img src="/img/hero.jpg" alt="Foto de Frayder Meza" />
       </div>
       <h1>Frayder Meza</h1>
-      <h2>Ingeniero de Software - Experto UI/UX</h2>
+      <h2>{{ $t('inicio.career1') }}</h2>
+      <h2>{{ $t('inicio.career2') }}</h2>
+      <h2>{{ $t('inicio.career3') }}</h2>
+      <h2>{{ $t('inicio.career4') }}</h2>
 
       <div class="redes">
         <a
@@ -33,30 +40,113 @@
 </template>
 
 <script setup>
-// No se necesita lógica JS para esta sección
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+
+const hero = ref(null)
+
+const imagenes = [
+  '/img/esan.jpg',
+  'https://wallpapers.com/images/hd/it-computer-code-64g46se08419uzzr.jpg',
+  '/img/machuPichu.jpg',
+  'https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iyVj9399TX5M/v1/-1x-1.webp',
+  'https://portal.andina.pe/EDPfotografia2/Thumbnail/2011/09/24/000165838W.jpg',
+]
+
+function preload(src) {
+  return new Promise((resolve) => {
+    const i = new Image()
+    i.onload = resolve
+    i.onerror = resolve
+    i.src = src
+  })
+}
+
+onMounted(async () => {
+  const section = hero.value
+  const fondo = section.querySelector('.fondo')
+  if (!fondo) return
+
+  let index = 0
+  const fadeMs = 700
+  const everyMs = 4000
+
+  // Estado inicial
+  fondo.style.backgroundImage = `
+    linear-gradient(to top, rgba(18,24,35,0.3), rgba(10,14,25,0.4)),
+    url(${imagenes[index]})
+  `
+
+  // Preload de la próxima
+  let next = (index + 1) % imagenes.length
+  await preload(imagenes[next])
+
+  const swap = async () => {
+    // Fade out solo del fondo
+    fondo.classList.add('is-fading')
+
+    // Espera a que termine el fade-out
+    await new Promise((resolve) => {
+      const handler = (e) => {
+        if (e.propertyName !== 'opacity') return
+        fondo.removeEventListener('transitionend', handler)
+        resolve()
+      }
+      fondo.addEventListener('transitionend', handler, { once: true })
+      setTimeout(resolve, fadeMs + 50) // fallback
+    })
+
+    // Cambia la imagen
+    index = next
+    fondo.style.backgroundImage = `
+      linear-gradient(to top, rgba(18,24,35,0.4), rgba(10,14,25,0.5)),
+      url(${imagenes[index]})
+    `
+
+    // Prepara la próxima
+    next = (index + 1) % imagenes.length
+    preload(imagenes[next])
+
+    // Forzar reflow y fade in
+    void fondo.offsetWidth
+    fondo.classList.remove('is-fading')
+  }
+
+  const timer = setInterval(swap, everyMs)
+  onBeforeUnmount(() => clearInterval(timer))
+})
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Righteous&family=Work+Sans:wght@100;300;400;600;800&display=swap');
 
 .inicio {
-  background:
-    linear-gradient(
-      to top,
-      rgba(18, 24, 35, 0.7),
-      /* azul grisáceo oscuro */ rgba(10, 14, 25, 0.9) /* azul casi negro */
-    ),
-    url('/img/esan.jpg');
-  background-size: cover;
-  background-position: center;
+  position: relative;
   height: 100vh;
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  color: #fff;
 }
 
+/* Fondo dinámico */
+.fondo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 500ms ease-in-out;
+  opacity: 1;
+  z-index: 0;
+}
+.fondo.is-fading {
+  opacity: 0;
+}
+
+/* Contenido encima */
 .contenido-banner {
+  position: relative;
+  z-index: 1;
   padding: 20px;
   background-color: #0c101b;
   max-width: 350px;
@@ -81,14 +171,14 @@ h1 {
 }
 
 h2 {
-  margin-top: -5em;
+  margin-top: -3.7em;
   font-size: 15px;
   font-weight: normal;
   font-family: 'Work Sans', sans-serif;
 }
 
 .redes {
-  margin-top: 1em;
+  margin-top: -2em;
 }
 
 .redes a {
@@ -109,19 +199,5 @@ h2 {
 .redes a:hover {
   background-color: #3c3c3c;
   border-color: #3c3c3c;
-}
-
-@keyframes slideInCenter {
-  0% {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  60% {
-    transform: translateX(-20px);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(0);
-  }
 }
 </style>

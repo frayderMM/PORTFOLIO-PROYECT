@@ -1,8 +1,8 @@
 <template>
   <section id="curriculum" class="curriculum">
     <div class="contenido-seccion">
-      <h2>Curriculum</h2>
-      <h3>Educación</h3>
+      <h2>{{ $t('curriculum.title') }}</h2>
+      <h3>{{ $t('curriculum.education') }}</h3>
       <div class="bloques">
         <Educacion />
         <Experiencia />

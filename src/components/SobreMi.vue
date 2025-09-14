@@ -1,49 +1,78 @@
 <template>
   <section id="sobremi" class="sobremi">
     <div class="contenido-seccion">
-      <h2>Sobre Mí</h2>
+      <!-- Título -->
+      <h2>{{ $t('sobreMi.title') }}</h2>
+
+      <!-- Introducción -->
       <p>
-        <span>Hola, soy Frayder Meza.</span>
-        Estudio Ingeniería en Tecnología de la Información y Sistemas en la Universidad ESAN...
+        <span>{{ $t('sobreMi.intro.helloSpan', { name: 'Frayder Meza' }) }}</span>
+        {{ $t('sobreMi.intro.text') }}
       </p>
 
       <div class="fila">
         <!-- Datos personales -->
         <div class="col">
-          <h3>Datos Personales</h3>
+          <h3>{{ $t('sobreMi.personal.title') }}</h3>
           <ul>
-            <li><strong>Cumpleaños</strong>01-08-2005</li>
-            <li><strong>Teléfono</strong>+51 925650163</li>
-            <li><strong>Email</strong>mezamorvelifrayder2005@gmail.com</li>
-            <li><strong>Website</strong>www.mezafrayder.com</li>
-            <li><strong>Dirección</strong>Lima - Perú</li>
-            <li><strong>Cargo</strong><span>FREELANCE</span></li>
+            <li>
+              <strong>{{ $t('sobreMi.personal.birthday') }}</strong
+              >01-08-2005
+            </li>
+            <li>
+              <strong>{{ $t('sobreMi.personal.phone') }}</strong
+              >+51 925650163
+            </li>
+            <li>
+              <strong>{{ $t('sobreMi.personal.email') }}</strong
+              >mezamorvelifrayder2005@gmail.com
+            </li>
+            <li>
+              <strong>{{ $t('sobreMi.personal.website') }}</strong
+              >www.mezafrayder.com
+            </li>
+            <li>
+              <strong>{{ $t('sobreMi.personal.address') }}</strong
+              >Lima - Perú
+            </li>
+            <li>
+              <strong>{{ $t('sobreMi.personal.role') }}</strong>
+              <span>{{ $t('sobreMi.personal.roleValue') }}</span>
+            </li>
           </ul>
         </div>
 
         <!-- Intereses -->
         <div class="col">
-          <h3>Intereses</h3>
+          <h3>{{ $t('sobreMi.interests.title') }}</h3>
           <div class="contenedor-intereses">
             <div
               class="interes"
               v-for="(item, i) in intereses"
               :key="i"
-              @click="toggleInteres(item.label)"
+              @click="toggleInteres(item.key)"
+              :class="{ active: activeInterest === item.key }"
             >
-              <i :class="item.icon"></i>
+              <i :class="item.icon" aria-hidden="true"></i>
               <span>{{ item.label }}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Galería personalizada -->
+      <!-- Galería -->
       <div v-if="activeInterest" class="galeria">
-        <h4>Galería: {{ activeInterest }}</h4>
+        <h4>
+          {{
+            $t('sobreMi.galleryTitle', {
+              label: intereses.find((i) => i.key === activeInterest)?.label || activeInterest,
+            })
+          }}
+        </h4>
+
         <div class="imagenes">
           <template v-for="n in activeInterest === 'LIBROS' ? 8 : 4" :key="n">
-            <!-- LIBROS -->
+            <!-- LIBROS (link a PDF) -->
             <a
               v-if="activeInterest === 'LIBROS'"
               :href="getLibroUrl(n)"
@@ -53,117 +82,155 @@
               <img :src="`/img/galeria/LIBROS/${n}.jpg`" :alt="`Libro ${n}`" class="img-libro" />
             </a>
 
-            <!-- MUSICA -->
-            <img
-              v-else-if="activeInterest === 'MUSICA'"
-              :src="`/img/galeria/MUSICA/${n}.jpg`"
-              :alt="`Música ${n}`"
-              @mouseenter="handleAudioPlay(n)"
-              @mouseleave="stopAudio"
-            />
-
-            <!-- MMA -->
+            <!-- MMA (gif overlay al hover) -->
             <div v-else-if="activeInterest === 'MMA'" class="img-hover-wrapper">
-              <img class="img-base" :src="`/img/galeria/MMA/${n}.jpg`" :alt="`MMA ${n}`" />
+              <img class="img-base" :src="getThumbSrc(activeInterest, n)" :alt="`MMA ${n}`" />
               <img
                 class="img-hover"
                 :class="{ show: gifIndex === n }"
                 :src="`/img/gifs/mma/${n}.gif`"
                 :alt="`GIF MMA ${n}`"
-                @mouseenter="gifIndex = n"
-                @mouseleave="gifIndex = null"
+                @mouseenter="onThumbEnter(n)"
+                @mouseleave="onThumbLeave"
               />
             </div>
 
-            <!-- Otros intereses -->
-            <img v-else :src="`/img/galeria/${activeInterest}/${n}.jpg`" :alt="`Imagen ${n}`" />
+            <!-- Otros (incluye MUSICA con gif below + audio) -->
+            <img
+              v-else
+              :src="getThumbSrc(activeInterest, n)"
+              :alt="`${activeInterest} ${n}`"
+              @mouseenter="onThumbEnter(n)"
+              @mouseleave="onThumbLeave"
+            />
           </template>
         </div>
       </div>
 
-      <!-- GIF dinámico solo para MUSICA -->
-      <div class="gif-container" v-if="activeInterest === 'MUSICA'">
+      <!-- GIF dinámico cuando el modo es 'below' (ej. MUSICA) -->
+      <div class="gif-container" v-if="activeInterest && isGifBelow">
         <transition name="fade">
-          <img v-if="gifVisible" :src="currentGif" alt="GIF musical" class="gif-animado" />
+          <img v-if="gifVisible" :src="currentGif" alt="GIF" class="gif-animado" />
         </transition>
       </div>
 
-      <!-- Botón CV -->
+      <!-- Botón descarga CV -->
       <a href="/doc/cv.pdf" download class="boton-descarga">
-        Descargar CV <i class="fa-solid fa-download"></i>
+        {{ $t('sobreMi.downloadCv') }}
+        <i class="fa-solid fa-download" aria-hidden="true"></i>
         <span class="overlay"></span>
       </a>
     </div>
   </section>
 </template>
+
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-// Estado del interés activo
-const activeInterest = ref(null)
+const { t } = useI18n()
 
-// Para audio y gif dinámico en MUSICA
+/**
+ * Intereses traducidos con `label`, pero cada uno con un `key` fijo.
+ * Esto permite comparar por `key` (ej. 'MUSICA') sin importar el idioma.
+ */
+const intereses = computed(() => [
+  { icon: 'fa-solid fa-gamepad', key: 'JUEGOS', label: t('sobreMi.interests.games') },
+  { icon: 'fa-solid fa-headphones', key: 'MUSICA', label: t('sobreMi.interests.music') },
+  { icon: 'fa-solid fa-plane', key: 'VIAJES', label: t('sobreMi.interests.travel') },
+  { icon: 'fa-solid fa-hand-fist', key: 'MMA', label: t('sobreMi.interests.mma') },
+  { icon: 'fa-solid fa-person-hiking', key: 'DEPORTE', label: t('sobreMi.interests.sport') },
+  { icon: 'fa-solid fa-book', key: 'LIBROS', label: t('sobreMi.interests.books') },
+  { icon: 'fa-solid fa-car', key: 'AUTOS', label: t('sobreMi.interests.cars') },
+  { icon: 'fa-solid fa-dragon', key: 'ANIME', label: t('sobreMi.interests.anime') },
+])
+
+// Interés activo
+const activeInterest = ref('ANIME')
+
+/**
+ * Configuración por interés (para soportar gifs, audio, etc.)
+ */
+const interestConfig = {
+  MUSICA: { gifMode: 'below', audio: true },
+  MMA: { gifMode: 'overlay', audio: true },
+  JUEGOS: { gifMode: null, audio: false },
+  VIAJES: { gifMode: null, audio: false },
+  DEPORTE: { gifMode: null, audio: false },
+  LIBROS: { gifMode: null, audio: false },
+  AUTOS: { gifMode: null, audio: false },
+  ANIME: { gifMode: null, audio: false },
+}
+
+// Estado multimedia
 const currentAudio = ref(null)
 const currentGif = ref(null)
 const gifVisible = ref(false)
-
-// Para gif directo sobre imagen en MMA
 const gifIndex = ref(null)
 
-// Lista de intereses
-const intereses = [
-  { icon: 'fa-solid fa-gamepad', label: 'JUEGOS' },
-  { icon: 'fa-solid fa-headphones', label: 'MUSICA' },
-  { icon: 'fa-solid fa-plane', label: 'VIAJES' },
-  { icon: 'fa-solid fa-hand-fist', label: 'MMA' },
-  { icon: 'fa-solid fa-person-hiking', label: 'DEPORTE' },
-  { icon: 'fa-solid fa-book', label: 'LIBROS' },
-  { icon: 'fa-solid fa-car', label: 'AUTOS' },
-  { icon: 'fa-solid fa-dragon', label: 'ANIME' },
-]
+// Saber si el modo actual es "below" (gif debajo)
+const isGifBelow = computed(() => {
+  const cfg = interestConfig[activeInterest.value]
+  return cfg?.gifMode === 'below'
+})
 
-// Alternar interés activo
-const toggleInteres = (label) => {
-  // Si es el mismo, lo desactiva
-  activeInterest.value = activeInterest.value === label ? null : label
-
-  // Reiniciar estados
+// Cambiar interés activo
+function toggleInteres(key) {
+  activeInterest.value = activeInterest.value === key ? null : key
   stopAudio()
+  gifVisible.value = false
   currentGif.value = null
+  gifIndex.value = null
+}
+
+// Al entrar con el mouse sobre una miniatura
+function onThumbEnter(index) {
+  const cfg = interestConfig[activeInterest.value]
+  if (!cfg) return
+
+  // MUSICA: reproducir audio + gif below
+  if (cfg.audio) {
+    stopAudio()
+    currentAudio.value = new Audio(`/audio/${activeInterest.value.toLowerCase()}/${index}.mp3`)
+    currentAudio.value.volume = 0.5
+    currentAudio.value.play().catch((err) => console.warn('Error al reproducir audio:', err))
+  }
+
+  // Gif debajo
+  if (cfg.gifMode === 'below') {
+    currentGif.value = `/img/gifs/${activeInterest.value.toLowerCase()}/${index}.gif`
+    gifVisible.value = true
+  }
+
+  // Gif overlay
+  if (cfg.gifMode === 'overlay') {
+    gifIndex.value = index
+  }
+}
+
+// Al salir de la miniatura
+function onThumbLeave() {
+  stopAudio()
   gifVisible.value = false
   gifIndex.value = null
 }
 
-// Hover sobre imagen de MUSICA: mostrar gif y reproducir audio
-const handleAudioPlay = (index) => {
-  if (activeInterest.value === 'MUSICA') {
-    stopAudio()
-
-    // Mostrar gif debajo
-    currentGif.value = `/img/gifs/musica/${index}.gif`
-    gifVisible.value = true
-
-    // Reproducir audio
-    currentAudio.value = new Audio(`/audio/musica/${index}.mp3`)
-    currentAudio.value.volume = 0.5
-    currentAudio.value.play().catch((err) => {
-      console.warn('Error al reproducir el audio:', err)
-    })
-  }
-}
-
-// Detener audio y ocultar gif musical
-const stopAudio = () => {
+// Detener audio
+function stopAudio() {
   if (currentAudio.value) {
     currentAudio.value.pause()
     currentAudio.value.currentTime = 0
     currentAudio.value = null
   }
-  gifVisible.value = false
 }
 
-// Obtener enlace PDF por número (solo LIBROS)
-const getLibroUrl = (n) => {
+// Ruta genérica para thumbnails
+function getThumbSrc(key, n) {
+  return `/img/galeria/${key}/${n}.jpg`
+}
+
+// Enlaces de libros (solo para LIBROS)
+function getLibroUrl(n) {
   const links = {
     1: 'https://librerialatina.co/wp-content/uploads/2024/04/HABITOS-ATOMICOS-JAMES-CLEAR.pdf',
     2: 'https://rudyct.com/ai/Artificial%20Intelligence%20A%20Modern%20Approach,%203rd%20Edition%20by%20Stuart%20J.%20Russell,%20Peter%20Norvig-2016.pdf',
@@ -177,6 +244,7 @@ const getLibroUrl = (n) => {
   return links[n] || '#'
 }
 </script>
+
 <style scoped>
 /* Sección principal */
 .sobremi {
@@ -415,5 +483,27 @@ ul li span {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+.interes.active {
+  color: #e0e0ff;
+  border: 1px solid #e0e0ff;
+  animation: pulse 0.6s steps(2, end) infinite;
+  /* background-color: #090930; */
+  box-shadow: 0 0 10px #00bfff;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 1px currentColor,
+      0 0 8px currentColor,
+      0 0 20px currentColor;
+  }
+  50% {
+    box-shadow:
+      0 0 3px currentColor,
+      0 0 10px currentColor,
+      0 0 30px currentColor;
+  }
 }
 </style>

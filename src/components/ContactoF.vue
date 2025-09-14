@@ -1,7 +1,7 @@
 <template>
   <section id="contacto" class="contacto">
     <div class="contenido-seccion">
-      <h2>CONTACTO</h2>
+      <h2>{{ $t('contact.title') }}</h2>
 
       <div class="fila">
         <!-- Formulario -->
@@ -10,7 +10,7 @@
             <div class="form-group" :class="{ error: errors.nombre }">
               <input
                 type="text"
-                placeholder="Tu Nombre"
+                :placeholder="$t('contact.placeholders.name')"
                 v-model.trim="form.nombre"
                 autocomplete="name"
               />
@@ -20,7 +20,7 @@
             <div class="form-group" :class="{ error: errors.telefono }">
               <input
                 type="text"
-                placeholder="Número telefónico"
+                :placeholder="$t('contact.placeholders.phone')"
                 v-model.trim="form.telefono"
                 inputmode="tel"
                 autocomplete="tel"
@@ -31,7 +31,7 @@
             <div class="form-group" :class="{ error: errors.email }">
               <input
                 type="email"
-                placeholder="Dirección de correo"
+                :placeholder="$t('contact.placeholders.email')"
                 v-model.trim="form.email"
                 autocomplete="email"
               />
@@ -39,22 +39,33 @@
             </div>
 
             <div class="form-group" :class="{ error: errors.tema }">
-              <input type="text" placeholder="Tema" v-model.trim="form.tema" />
+              <input
+                type="text"
+                :placeholder="$t('contact.placeholders.subject')"
+                v-model.trim="form.tema"
+              />
               <small v-if="errors.tema">{{ errors.tema }}</small>
             </div>
 
             <div class="form-group" :class="{ error: errors.mensaje }">
-              <textarea rows="8" placeholder="Mensaje" v-model.trim="form.mensaje"></textarea>
+              <textarea
+                rows="8"
+                :placeholder="$t('contact.placeholders.message')"
+                v-model.trim="form.mensaje"
+              ></textarea>
               <small v-if="errors.mensaje">{{ errors.mensaje }}</small>
             </div>
 
             <button type="submit" :disabled="enviando">
-              <span v-if="!enviando">Enviar Mensaje <i class="fa-solid fa-paper-plane"></i></span>
-              <span v-else>Enviando…</span>
+              <span v-if="!enviando">
+                {{ $t('contact.button.send') }}
+                <i class="fa-solid fa-paper-plane"></i>
+              </span>
+              <span v-else>{{ $t('contact.button.sending') }}</span>
               <span class="overlay"></span>
             </button>
 
-            <p v-if="exito" class="toast-exito">✅ ¡Mensaje enviado correctamente!</p>
+            <p v-if="exito" class="toast-exito">{{ $t('contact.toast.success') }}</p>
           </form>
         </div>
 
@@ -67,7 +78,7 @@
                 loading="lazy"
                 allowfullscreen
                 referrerpolicy="no-referrer-when-downgrade"
-                title="Mapa de ubicación"
+                :title="$t('contact.map.title')"
               ></iframe>
 
               <!-- Botón flotante para abrir en Google Maps -->
@@ -76,24 +87,33 @@
                 :href="MAP_LINK"
                 target="_blank"
                 rel="noopener"
-                aria-label="Abrir en Google Maps"
+                :aria-label="$t('contact.map.openBtn')"
               >
                 <i class="fa-solid fa-up-right-from-square"></i>
-                <span>Ver en Google Maps</span>
+                <span>{{ $t('contact.map.openBtn') }}</span>
               </a>
             </div>
           </div>
 
           <div class="info">
             <ul>
-              <li><i class="fa-solid fa-location-dot"></i> La Molina, Lima, Perú</li>
-              <li><i class="fa-solid fa-mobile-screen"></i> Llámame: +51 925650163</li>
-              <li><i class="fa-solid fa-envelope"></i> Email: fraydermezamorveli@gmail.com</li>
+              <li>
+                <i class="fa-solid fa-location-dot"></i>
+                {{ $t('contact.info.address') }}
+              </li>
+              <li>
+                <i class="fa-solid fa-mobile-screen"></i>
+                {{ $t('contact.info.callMe', { phone: PHONE }) }}
+              </li>
+              <li>
+                <i class="fa-solid fa-envelope"></i>
+                {{ $t('contact.info.emailMe', { email: EMAIL }) }}
+              </li>
             </ul>
 
             <!-- Enlace visible extra (útil en móviles) -->
             <a class="map-link-inline" :href="MAP_LINK" target="_blank" rel="noopener">
-              Abrir en Google Maps
+              {{ $t('contact.map.openInline') }}
               <i class="fa-solid fa-arrow-up-right-from-square"></i>
             </a>
           </div>
@@ -106,7 +126,10 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import emailjs from '@emailjs/browser'
+
+const { t } = useI18n()
 
 /** 🔗 Enlaces del mapa */
 const MAP_LINK = 'https://maps.app.goo.gl/Gg9YXZw3v5nEXobm7'
@@ -114,6 +137,10 @@ const MAP_LINK = 'https://maps.app.goo.gl/Gg9YXZw3v5nEXobm7'
 // Reemplázalo por el iframe oficial de "Compartir > Insertar un mapa" si quieres el pin exacto
 const MAP_EMBED_SRC =
   'https://www.google.com/maps?q=La%20Molina%2C%20Lima%2C%20Per%C3%BA&hl=es&z=14&output=embed'
+
+/** 📞 Datos visibles en la info */
+const PHONE = '+51 925650163'
+const EMAIL = 'fraydermezamorveli@gmail.com'
 
 /** 📬 Estado del formulario */
 const form = ref({
@@ -128,29 +155,29 @@ const errors = ref({ nombre: '', telefono: '', email: '', tema: '', mensaje: '' 
 const enviando = ref(false)
 const exito = ref(false)
 
-/** ✅ Validación básica */
+/** ✅ Validación básica (i18n) */
 function validar() {
   errors.value = { nombre: '', telefono: '', email: '', tema: '', mensaje: '' }
   let ok = true
   if (!form.value.nombre) {
-    errors.value.nombre = 'Ingresa tu nombre.'
+    errors.value.nombre = t('contact.errors.nameRequired')
     ok = false
   }
   if (!form.value.telefono) {
-    errors.value.telefono = 'Ingresa tu número.'
+    errors.value.telefono = t('contact.errors.phoneRequired')
     ok = false
   }
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!form.value.email || !re.test(form.value.email)) {
-    errors.value.email = 'Correo no válido.'
+    errors.value.email = t('contact.errors.emailInvalid')
     ok = false
   }
   if (!form.value.tema) {
-    errors.value.tema = 'Ingresa el tema.'
+    errors.value.tema = t('contact.errors.subjectRequired')
     ok = false
   }
   if (!form.value.mensaje) {
-    errors.value.mensaje = 'Escribe tu mensaje.'
+    errors.value.mensaje = t('contact.errors.messageRequired')
     ok = false
   }
   return ok
