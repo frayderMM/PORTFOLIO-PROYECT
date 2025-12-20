@@ -66,6 +66,7 @@
             </button>
 
             <p v-if="exito" class="toast-exito">{{ $t('contact.toast.success') }}</p>
+            <p v-if="errorMsg" class="toast-error">{{ errorMsg }}</p>
           </form>
         </div>
 
@@ -154,6 +155,11 @@ const form = ref({
 const errors = ref({ nombre: '', telefono: '', email: '', tema: '', mensaje: '' })
 const enviando = ref(false)
 const exito = ref(false)
+const errorMsg = ref('')
+
+const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
 
 /** ✅ Validación básica (i18n) */
 function validar() {
@@ -186,7 +192,13 @@ function validar() {
 /** ✉️ Envío con EmailJS */
 async function enviarMensaje() {
   exito.value = false
+  errorMsg.value = ''
   if (!validar()) return
+
+  if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
+    errorMsg.value = 'Configuración de correo no disponible. Revisa las variables de entorno.'
+    return
+  }
 
   enviando.value = true
   try {
@@ -198,18 +210,13 @@ async function enviarMensaje() {
       mensaje: form.value.mensaje,
     }
 
-    await emailjs.send(
-      'service_ab3hmlm', // Service ID
-      'template_t8narqa', // Template ID
-      templateParams,
-      { publicKey: 'aNlRPcQ05FzfswqEg' }, // Public Key
-    )
+    await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, { publicKey: PUBLIC_KEY })
 
     exito.value = true
     form.value = { nombre: '', telefono: '', email: '', tema: '', mensaje: '' }
   } catch (e) {
     console.error('EmailJS error:', e)
-    alert('❌ Ocurrió un error al enviar. Inténtalo nuevamente.')
+    errorMsg.value = 'Ocurrió un error al enviar. Inténtalo nuevamente.'
   } finally {
     enviando.value = false
   }
@@ -334,6 +341,12 @@ button:hover .overlay {
 button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.toast-error {
+  margin-top: 10px;
+  color: #ff9b9b;
+  font-weight: 600;
 }
 
 /* Columna info */

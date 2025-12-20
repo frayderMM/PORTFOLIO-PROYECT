@@ -6,13 +6,11 @@
     <!-- Contenido encima -->
     <div class="contenido-banner">
       <div class="contenedor-img">
-        <img src="/img/hero.jpg" alt="Foto de Frayder Meza" />
+        <img src="/img/hero.jpg" alt="Foto de Frayder Meza" loading="lazy" />
       </div>
       <h1>Frayder Meza</h1>
       <h2>{{ $t('inicio.career1') }}</h2>
       <h2>{{ $t('inicio.career2') }}</h2>
-      <h2>{{ $t('inicio.career3') }}</h2>
-      <h2>{{ $t('inicio.career4') }}</h2>
 
       <div class="redes">
         <a
@@ -152,6 +150,7 @@ onMounted(async () => {
   max-width: 350px;
   text-align: center;
   border-radius: 40px;
+  transform: translateY(40px); /* baja ligeramente el bloque */
 }
 
 .contenedor-img img {
@@ -171,7 +170,7 @@ h1 {
 }
 
 h2 {
-  margin-top: -3.7em;
+  margin-top: -3em;
   font-size: 15px;
   font-weight: normal;
   font-family: 'Work Sans', sans-serif;

@@ -11,6 +11,8 @@ export function useLang() {
     locale.value = l
     localStorage.setItem('lang', l)
     document.documentElement.lang = l
+    // Trigger re-render de componentes reactivos
+    document.documentElement.setAttribute('data-lang', l)
   }
 
   function toggleLanguage() {

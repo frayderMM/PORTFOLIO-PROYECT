@@ -9,10 +9,8 @@ export default {
     contact: 'Contacto',
   },
   inicio: {
-    career1: 'Ingeniero de Software',
-    career2: 'Desarrollador Full Stack',
-    career3: 'Apasionado por el UI/UX',
-    career4: 'Futuro Científico/a de Datos e IA',
+    career1: 'Ing. Tecnologías Información y Sistemas',
+    career2: 'Full Stack Developer',
   },
 
   sobreMi: {
@@ -39,7 +37,7 @@ export default {
       mma: 'MMA',
       sport: 'Deporte',
       books: 'Libros',
-      cars: 'Autos',
+      animation: 'Animación',
       anime: 'Anime',
     },
     galleryTitle: 'Galería de {label}',

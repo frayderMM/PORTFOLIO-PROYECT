@@ -45,6 +45,9 @@
         <!-- Intereses -->
         <div class="col">
           <h3>{{ $t('sobreMi.interests.title') }}</h3>
+          <button class="audio-toggle" type="button" @click="audioEnabled = !audioEnabled">
+            {{ audioEnabled ? '🔇 Desactivar audio' : '🔊 Activar audio' }}
+          </button>
           <div class="contenedor-intereses">
             <div
               class="interes"
@@ -141,7 +144,7 @@ const intereses = computed(() => [
   { icon: 'fa-solid fa-hand-fist', key: 'MMA', label: t('sobreMi.interests.mma') },
   { icon: 'fa-solid fa-person-hiking', key: 'DEPORTE', label: t('sobreMi.interests.sport') },
   { icon: 'fa-solid fa-book', key: 'LIBROS', label: t('sobreMi.interests.books') },
-  { icon: 'fa-solid fa-car', key: 'AUTOS', label: t('sobreMi.interests.cars') },
+  { icon: 'fa-solid fa-film', key: 'ANIMACION', label: t('sobreMi.interests.animation') },
   { icon: 'fa-solid fa-dragon', key: 'ANIME', label: t('sobreMi.interests.anime') },
 ])
 
@@ -158,7 +161,7 @@ const interestConfig = {
   VIAJES: { gifMode: null, audio: false },
   DEPORTE: { gifMode: null, audio: false },
   LIBROS: { gifMode: null, audio: false },
-  AUTOS: { gifMode: null, audio: false },
+  ANIMACION: { gifMode: null, audio: false },
   ANIME: { gifMode: null, audio: false },
 }
 
@@ -167,6 +170,16 @@ const currentAudio = ref(null)
 const currentGif = ref(null)
 const gifVisible = ref(false)
 const gifIndex = ref(null)
+const audioEnabled = ref(true)
+const animationsEnabled = ref(true)
+
+if (typeof window !== 'undefined') {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)')
+  if (prefersReduced.matches) {
+    audioEnabled.value = false
+    animationsEnabled.value = false
+  }
+}
 
 // Saber si el modo actual es "below" (gif debajo)
 const isGifBelow = computed(() => {
@@ -189,7 +202,7 @@ function onThumbEnter(index) {
   if (!cfg) return
 
   // MUSICA: reproducir audio + gif below
-  if (cfg.audio) {
+  if (cfg.audio && audioEnabled.value) {
     stopAudio()
     currentAudio.value = new Audio(`/audio/${activeInterest.value.toLowerCase()}/${index}.mp3`)
     currentAudio.value.volume = 0.5
@@ -197,13 +210,13 @@ function onThumbEnter(index) {
   }
 
   // Gif debajo
-  if (cfg.gifMode === 'below') {
+  if (cfg.gifMode === 'below' && animationsEnabled.value) {
     currentGif.value = `/img/gifs/${activeInterest.value.toLowerCase()}/${index}.gif`
     gifVisible.value = true
   }
 
   // Gif overlay
-  if (cfg.gifMode === 'overlay') {
+  if (cfg.gifMode === 'overlay' && animationsEnabled.value) {
     gifIndex.value = index
   }
 }
@@ -324,6 +337,24 @@ ul li span {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
+}
+
+.audio-toggle {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 191, 255, 0.5);
+  background: #0c101b;
+  color: #e6f1ff;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.audio-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 191, 255, 0.2);
 }
 
 .interes {

@@ -1,29 +1,32 @@
 <template>
-  <div class="saludo">
-    <h1>{{ mensaje }}</h1>
-    <button @click="cambiarMensaje">Cambiar mensaje</button>
+  <div class="pagina-principal">
+    <Header />
+    <Inicio />
+    <SobreMi />
+    <Skills />
+    <Curriculum />
+    <Portfolio />
+    <Contacto />
+    <Footer />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
-const mensaje = ref('¡Hola desde Vue!')
-
-function cambiarMensaje() {
-  mensaje.value = '¡Mensaje actualizado!'
-}
+import Header from 'src/components/HeaderF.vue'
+import Inicio from 'src/components/InicioF.vue'
+import SobreMi from 'src/components/SobreMi.vue'
+import Skills from 'src/components/SkillsF.vue'
+import Curriculum from 'src/components/CurriculumF.vue'
+import Portfolio from 'src/components/PortfolioF.vue'
+import Contacto from 'src/components/ContactoF.vue'
+import Footer from 'src/components/FooterF.vue'
 </script>
 
 <style scoped>
-.saludo {
-  text-align: center;
-  padding: 20px;
-}
-
-button {
-  margin-top: 10px;
-  padding: 8px 16px;
-  font-size: 16px;
+.pagina-principal {
+  font-family: 'Work Sans', sans-serif;
+  background-color: #0c101b;
+  color: white;
+  scroll-behavior: smooth;
 }
 </style>
