@@ -26,7 +26,7 @@ function scrollTo(id) {
   <div class="contenedor-header">
     <header>
       <div class="logo">
-        <a href="#">ALIMAC</a>
+        <a href="#">FRAYDER</a>
       </div>
 
       <nav :class="{ responsive: menuVisible }" id="nav">

@@ -78,20 +78,20 @@ function onViewerError() {
 
 const proyectos = [
   {
-    imagen: '/img/p1.jpg',
+    imagen: '/img/Portfolio/Af.jpg',
     titulo: 'Animación',
     descripcion: 'Animación',
     alt: 'Proyecto 1',
   },
   {
-    imagen: '/img/p2.jpg',
-    titulo: 'Diseño Creativo',
-    descripcion: 'Fotografía',
+    imagen: '/img/Portfolio/360.webp',
+    titulo: 'Modelado Paramétrico',
+    descripcion: '3D',
     alt: 'Proyecto 2',
   },
   {
-    imagen: '/img/p3.jpg',
-    titulo: 'Diseño Creativo',
+    imagen: '/img/Portfolio/fil.jpg',
+    titulo: 'Edición de video',
     descripcion: 'Fotografía',
     alt: 'Proyecto 3',
   },

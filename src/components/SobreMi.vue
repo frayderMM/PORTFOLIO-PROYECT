@@ -13,7 +13,16 @@
       <div class="fila">
         <!-- Datos personales -->
         <div class="col">
-          <h3>{{ $t('sobreMi.personal.title') }}</h3>
+          <div class="titulo-personal">
+            <h3>{{ $t('sobreMi.personal.title') }}</h3>
+
+            <div class="doc-buttons">
+              <button @click="scrollToDoc('dni')">🪪 DNI</button>
+
+              <button @click="scrollToDoc('licencia')">🚗 Lic.</button>
+            </div>
+          </div>
+
           <ul>
             <li>
               <strong>{{ $t('sobreMi.personal.birthday') }}</strong
@@ -25,7 +34,11 @@
             </li>
             <li>
               <strong>{{ $t('sobreMi.personal.email') }}</strong
-              >mezamorvelifrayder2005@gmail.com
+              >mmfrayder@gmail.com
+            </li>
+            <li>
+              <strong>{{ $t('sobreMi.personal.licencia') }}</strong
+              ><span>{{ $t('sobreMi.personal.licenciaValue') }}</span>
             </li>
             <li>
               <strong>{{ $t('sobreMi.personal.website') }}</strong
@@ -123,6 +136,26 @@
         <i class="fa-solid fa-download" aria-hidden="true"></i>
         <span class="overlay"></span>
       </a>
+    </div>
+    <!-- Documentos -->
+    <div v-if="activeDoc" class="documentos">
+      <!-- DNI -->
+      <div v-if="activeDoc === 'dni'" id="dni" class="doc-section">
+        <h4>DNI</h4>
+        <div class="doc-imgs">
+          <img src="/img/documentos/DNI/01.png" alt="DNI frontal" />
+          <img src="/img/documentos/DNI/02.png" alt="DNI posterior" />
+        </div>
+      </div>
+
+      <!-- Licencia -->
+      <div v-if="activeDoc === 'licencia'" id="licencia" class="doc-section">
+        <h4>{{ $t('sobreMi.personal.licencia') }}</h4>
+        <div class="doc-imgs">
+          <img src="/img/documentos/licencia/01.png" alt="Licencia frontal" />
+          <img src="/img/documentos/licencia/02.png" alt="Licencia posterior" />
+        </div>
+      </div>
     </div>
   </section>
 </template>
@@ -255,6 +288,20 @@ function getLibroUrl(n) {
     8: 'http://repo.darmajaya.ac.id/4546/1/The%20Strategy-Focused%20Organization_%20How%20Balanced%20Scorecard%20Companies%20Thrive%20in%20the%20New%20Business%20Environment%20%28%20PDFDrive%20%29.pdf',
   }
   return links[n] || '#'
+}
+const activeDoc = ref(null)
+function scrollToDoc(id) {
+  activeDoc.value = id
+
+  setTimeout(() => {
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }
+  }, 100)
 }
 </script>
 
@@ -536,5 +583,90 @@ ul li span {
       0 0 10px currentColor,
       0 0 30px currentColor;
   }
+}
+
+/* Título con botones */
+.titulo-personal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.doc-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.doc-buttons button {
+  background: #00bfff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.doc-buttons button:hover {
+  transform: scale(1.05);
+}
+
+/* Sección documentos */
+/* Sección documentos */
+.documentos {
+  margin-top: 60px;
+  display: flex;
+  justify-content: center;
+}
+
+/* contenedor del documento */
+.doc-section {
+  text-align: center;
+  max-width: 900px;
+  width: 100%;
+}
+
+/* titulo documento */
+.doc-section h4 {
+  font-size: 26px;
+  margin-bottom: 25px;
+  color: #00bfff;
+  font-family: 'Righteous', sans-serif;
+}
+
+/* contenedor de imágenes */
+.doc-imgs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+/* tarjeta imagen */
+.doc-imgs img {
+  width: 340px;
+  border-radius: 12px;
+  border: 2px solid rgba(0, 191, 255, 0.4);
+  background: #111827;
+  padding: 6px;
+
+  box-shadow:
+    0 0 10px rgba(0, 191, 255, 0.3),
+    0 10px 25px rgba(0, 0, 0, 0.6);
+
+  transition: all 0.35s ease;
+}
+
+/* efecto hover */
+.doc-imgs img:hover {
+  transform: scale(1.05) translateY(-4px);
+
+  border: 2px solid #00bfff;
+
+  box-shadow:
+    0 0 20px rgba(0, 191, 255, 0.8),
+    0 20px 40px rgba(0, 0, 0, 0.8);
 }
 </style>

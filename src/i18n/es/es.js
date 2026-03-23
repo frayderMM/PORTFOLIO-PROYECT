@@ -17,17 +17,19 @@ export default {
     title: 'Sobre mí',
     intro: {
       helloSpan: 'Hola, soy {name}',
-      text: 'Soy un apasionado desarrollador de software.',
+      text: 'Soy un apasionado de la tecnología.',
     },
     personal: {
       title: 'Datos personales',
       birthday: 'Cumpleaños:',
       phone: 'Teléfono:',
       email: 'Correo:',
+      licencia: 'Licencia de Conducir:',
       website: 'Sitio web:',
       address: 'Dirección:',
       role: 'Rol:',
       roleValue: 'Ingeniero de Software',
+      licenciaValue: 'Clase A - Categoría Uno',
     },
     interests: {
       title: 'Intereses',

@@ -26,9 +26,11 @@ export default {
       phone: 'Phone:',
       email: 'Email:',
       website: 'Website:',
+      licencia: 'Driver license:',
       address: 'Address:',
       role: 'Role:',
       roleValue: 'Software Engineer',
+      licenciaValue: 'Class A - Category One',
     },
     interests: {
       title: 'Interests',
