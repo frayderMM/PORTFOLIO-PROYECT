@@ -17,7 +17,7 @@
             <h3>{{ $t('sobreMi.personal.title') }}</h3>
 
             <div class="doc-buttons">
-              <button @click="scrollToDoc('dni')">🪪 DNI</button>
+              <!-- <button @click="scrollToDoc('dni')">🪪 DNI</button> -->
 
               <button @click="scrollToDoc('licencia')">🚗 Lic.</button>
             </div>
