@@ -131,7 +131,7 @@
       </div>
 
       <!-- Botón descarga CV -->
-      <a href="/doc/cv.pdf" download class="boton-descarga">
+      <a href="/doc/Cv_Frayder_Meza.pdf" download class="boton-descarga">
         {{ $t('sobreMi.downloadCv') }}
         <i class="fa-solid fa-download" aria-hidden="true"></i>
         <span class="overlay"></span>
