@@ -79,11 +79,43 @@
     <p class="smallprint">
       {{ $t('footer.copyrightPrefix', { year: new Date().getFullYear(), name: 'Frayder Meza' }) }}
     </p>
+
+    <p class="fechas">
+      <span>
+        <i class="fa-regular fa-calendar-plus" aria-hidden="true"></i>
+        {{ $t('footer.created') }}
+        <time :datetime="SITE_CREATED">{{ formatDate(SITE_CREATED) }}</time>
+      </span>
+      <span class="sep" aria-hidden="true">·</span>
+      <span>
+        <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+        {{ $t('footer.updated') }}
+        <time :datetime="SITE_UPDATED">{{ formatDate(SITE_UPDATED) }}</time>
+      </span>
+    </p>
   </footer>
 </template>
 
 <script setup>
 import { nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { locale } = useI18n()
+
+// Se inyectan en quasar.config.js (build.env) al compilar
+const SITE_CREATED = process.env.SITE_CREATED
+const SITE_UPDATED = process.env.SITE_UPDATED
+
+function formatDate(value) {
+  if (!value) return '—'
+  // 'YYYY-MM-DD' se interpreta como fecha local para no correr un día
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date(value)
+  return d.toLocaleDateString(locale.value === 'es' ? 'es-PE' : 'en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
 
 function scrollTo(id) {
   nextTick(() => {
@@ -219,6 +251,24 @@ function scrollTo(id) {
   margin-top: 18px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.fechas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 10px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  opacity: 0.85;
+}
+.fechas i {
+  margin-right: 4px;
+  color: var(--accent);
+}
+.fechas time {
+  color: var(--text);
 }
 
 /* ====== Utilidad accesible ====== */

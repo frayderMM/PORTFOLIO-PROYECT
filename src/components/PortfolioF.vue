@@ -18,7 +18,7 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              Ver proyecto
+              {{ $t('portfolio.viewProject') }}
               <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
             </a>
           </div>
@@ -28,8 +28,10 @@
       <!-- 3D Viewer below the portfolio gallery -->
       <div v-if="showViewer" ref="viewerRef" class="viewer-below">
         <div class="viewer-header">
-          <h3>Vista 3D: Orco</h3>
-          <button class="close-btn" @click="closeViewer" aria-label="Cerrar">✕</button>
+          <h3>{{ $t('portfolio.viewer3d', { name: 'Orco' }) }}</h3>
+          <button class="close-btn" @click="closeViewer" :aria-label="$t('portfolio.close')">
+            ✕
+          </button>
         </div>
         <model-viewer
           :src="viewerUrl"
@@ -112,7 +114,7 @@ const proyectos = [
     titulo: 'Redes',
     descripcion: 'Subneteo con VLSM y CIDR',
     alt: 'Proyecto Calculadora IP',
-    link: 'https://tusitio.com/calculadora-redes',
+    // Agrega aquí el enlace real cuando lo tengas publicado: link: 'https://...',
     tecnologias: ['Vue 3', 'JavaScript', 'CIDR', 'Subredes', 'CSV', 'Excel'],
   },
 ]
@@ -292,5 +294,34 @@ h2 {
 
 .proyecto:hover .overlay h3 {
   margin-bottom: 0;
+}
+
+/* Teclado: mostrar el contenido al enfocar un enlace de la tarjeta */
+.proyecto:focus-within .overlay {
+  opacity: 1;
+}
+
+/* Celulares y pantallas táctiles (sin hover): contenido siempre visible debajo de la imagen */
+@media (hover: none), (max-width: 768px) {
+  .overlay {
+    position: static;
+    opacity: 1;
+    background: #101624;
+    border-top: 3px solid var(--accent);
+    padding: 16px;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+  }
+  .overlay h3 {
+    margin-bottom: 6px;
+    font-size: 19px;
+  }
+  .proyecto:hover .overlay h3 {
+    margin-bottom: 6px;
+  }
+  .proyecto:hover,
+  .proyecto:hover img {
+    transform: none;
+  }
 }
 </style>

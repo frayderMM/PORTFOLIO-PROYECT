@@ -1,10 +1,38 @@
 <template>
-  <section id="inicio" style="scroll-margin-top: 100px" class="inicio" ref="hero">
-    <!-- Fondo dinámico -->
-    <div class="fondo"></div>
+  <section id="inicio" style="scroll-margin-top: 100px" class="inicio">
+    <!-- Fondo dinámico: una capa por imagen, se funden entre sí (crossfade) -->
+    <div class="fondo" aria-hidden="true">
+      <div
+        v-for="(src, i) in cargadas"
+        :key="src"
+        class="fondo-img"
+        :class="{
+          activo: i === actual,
+          previo: i === anterior,
+          'zoom-out': i % 2 === 1,
+        }"
+        :style="{ backgroundImage: `url(${src})` }"
+      ></div>
+      <div class="fondo-overlay"></div>
+    </div>
 
     <!-- Contenido encima -->
     <div class="contenido-banner">
+      <!-- Botón: abre las ventanas de LinkedIn y GitHub -->
+      <button
+        type="button"
+        class="btn-perfiles"
+        :class="{ abierto: perfilesAbiertos }"
+        :aria-expanded="perfilesAbiertos"
+        :aria-label="perfilesAbiertos ? $t('hero.profiles.close') : $t('hero.profiles.open')"
+        :title="perfilesAbiertos ? $t('hero.profiles.close') : $t('hero.profiles.open')"
+        @click="perfilesAbiertos = !perfilesAbiertos"
+      >
+        <i
+          :class="perfilesAbiertos ? 'fa-solid fa-xmark' : 'fa-solid fa-window-restore'"
+          aria-hidden="true"
+        ></i>
+      </button>
       <div class="contenedor-img">
         <img src="/img/hero.jpg" alt="Foto de Frayder Meza" loading="lazy" />
       </div>
@@ -34,13 +62,27 @@
         </a>
       </div>
     </div>
+
+
+    <Transition name="ventanas" :duration="650">
+      <SocialWindows v-if="perfilesAbiertos" @close="perfilesAbiertos = false" />
+    </Transition>
   </section>
 </template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import SocialWindows from './SocialWindows.vue'
 
-const hero = ref(null)
+// Ventanas de LinkedIn y GitHub
+const perfilesAbiertos = ref(false)
+function onTecla(e) {
+  if (e.key === 'Escape') perfilesAbiertos.value = false
+}
+
+// Tiempos de la animación (en ms)
+const CADA_MS = 6000 // tiempo que se muestra cada imagen
+const FADE_MS = 1600 // duración del fundido (debe coincidir con --fade en el CSS)
 
 const imagenes = [
   '/img/esan.jpg',
@@ -50,67 +92,73 @@ const imagenes = [
   'https://portal.andina.pe/EDPfotografia2/Thumbnail/2011/09/24/000165838W.jpg',
 ]
 
+// Solo entran al carrusel las imágenes que cargaron bien
+// (si un enlace externo se cae, se salta en vez de mostrar un fondo vacío)
+const cargadas = ref([imagenes[0]])
+const actual = ref(0)
+const anterior = ref(-1)
+
+let timer = null
+let limpieza = null
+let ultimoCambio = 0
+
 function preload(src) {
   return new Promise((resolve) => {
-    const i = new Image()
-    i.onload = resolve
-    i.onerror = resolve
-    i.src = src
+    const img = new Image()
+    img.onload = () => resolve(true)
+    img.onerror = () => resolve(false)
+    img.src = src
   })
 }
 
-onMounted(async () => {
-  const section = hero.value
-  const fondo = section.querySelector('.fondo')
-  if (!fondo) return
+function siguiente() {
+  if (cargadas.value.length < 2) return
+  // No cambiar si el fundido anterior no terminó
+  if (Date.now() - ultimoCambio < FADE_MS) return
+  ultimoCambio = Date.now()
+  anterior.value = actual.value
+  actual.value = (actual.value + 1) % cargadas.value.length
+  // Al terminar el fundido, la capa saliente se apaga (queda oculta debajo).
+  // Así, cuando le vuelva a tocar, entra desde opacidad 0 con su fundido completo.
+  clearTimeout(limpieza)
+  limpieza = setTimeout(() => (anterior.value = -1), FADE_MS + 50)
+}
 
-  let index = 0
-  const fadeMs = 700
-  const everyMs = 4000
+function iniciar() {
+  detener()
+  timer = setInterval(siguiente, CADA_MS)
+}
+function detener() {
+  clearInterval(timer)
+  timer = null
+}
 
-  // Estado inicial
-  fondo.style.backgroundImage = `
-    linear-gradient(to top, rgba(18,24,35,0.3), rgba(10,14,25,0.4)),
-    url(${imagenes[index]})
-  `
+// Pausa cuando la pestaña no está visible (ahorra batería y evita saltos al volver)
+function onVisibilidad() {
+  if (document.hidden) detener()
+  else if (!reducido) iniciar()
+}
 
-  // Preload de la próxima
-  let next = (index + 1) % imagenes.length
-  await preload(imagenes[next])
+let reducido = false
 
-  const swap = async () => {
-    // Fade out solo del fondo
-    fondo.classList.add('is-fading')
+onMounted(() => {
+  reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    // Espera a que termine el fade-out
-    await new Promise((resolve) => {
-      const handler = (e) => {
-        if (e.propertyName !== 'opacity') return
-        fondo.removeEventListener('transitionend', handler)
-        resolve()
-      }
-      fondo.addEventListener('transitionend', handler, { once: true })
-      setTimeout(resolve, fadeMs + 50) // fallback
-    })
+  // Precarga el resto en orden y las agrega cuando están listas
+  imagenes.slice(1).forEach(async (src) => {
+    if (await preload(src)) cargadas.value.push(src)
+  })
 
-    // Cambia la imagen
-    index = next
-    fondo.style.backgroundImage = `
-      linear-gradient(to top, rgba(18,24,35,0.4), rgba(10,14,25,0.5)),
-      url(${imagenes[index]})
-    `
+  document.addEventListener('visibilitychange', onVisibilidad)
+  document.addEventListener('keydown', onTecla)
+  if (!reducido) iniciar()
+})
 
-    // Prepara la próxima
-    next = (index + 1) % imagenes.length
-    preload(imagenes[next])
-
-    // Forzar reflow y fade in
-    void fondo.offsetWidth
-    fondo.classList.remove('is-fading')
-  }
-
-  const timer = setInterval(swap, everyMs)
-  onBeforeUnmount(() => clearInterval(timer))
+onBeforeUnmount(() => {
+  detener()
+  clearTimeout(limpieza)
+  document.removeEventListener('visibilitychange', onVisibilidad)
+  document.removeEventListener('keydown', onTecla)
 })
 </script>
 
@@ -129,16 +177,132 @@ onMounted(async () => {
 
 /* Fondo dinámico */
 .fondo {
+  --fade: 1600ms; /* = FADE_MS */
+  --kenburns: 8000ms; /* un poco más que CADA_MS + fade para que nunca se detenga en pantalla */
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #0c101b;
+}
+
+.fondo-img {
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center;
-  transition: opacity 500ms ease-in-out;
-  opacity: 1;
-  z-index: 0;
-}
-.fondo.is-fading {
   opacity: 0;
+  z-index: 0;
+  transition: opacity var(--fade) ease-in-out;
+  will-change: opacity, transform;
+}
+
+/* La imagen saliente se queda debajo, opaca, mientras la nueva aparece encima:
+   así no hay "parpadeo" oscuro entre imágenes */
+.fondo-img.previo {
+  opacity: 1;
+  z-index: 1;
+}
+.fondo-img.activo {
+  opacity: 1;
+  z-index: 2;
+}
+
+/* Efecto Ken Burns: zoom lento. Como activo y previo comparten la misma animación,
+   no se reinicia al cambiar de clase y el movimiento continúa durante el fundido */
+.fondo-img.activo,
+.fondo-img.previo {
+  animation: zoom-in var(--kenburns) ease-out forwards;
+}
+.fondo-img.zoom-out.activo,
+.fondo-img.zoom-out.previo {
+  animation-name: zoom-out;
+}
+
+@keyframes zoom-in {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.1) translate(-1%, -1%);
+  }
+}
+@keyframes zoom-out {
+  from {
+    transform: scale(1.1) translate(1%, 1%);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Capa oscura fija para que el contenido siempre se lea igual */
+.fondo-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: linear-gradient(to top, rgba(18, 24, 35, 0.45), rgba(10, 14, 25, 0.5));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo-img {
+    transition: none;
+  }
+  .fondo-img.activo,
+  .fondo-img.previo {
+    animation: none;
+  }
+}
+
+/* Botón de perfiles (LinkedIn + GitHub) */
+.btn-perfiles {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 3;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid #f0abfc;
+  background: linear-gradient(135deg, #c026d3, #7c3aed);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 rgba(192, 38, 211, 0.7);
+  animation: perfiles-pulso 2s ease-out infinite;
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease;
+}
+.btn-perfiles:hover {
+  transform: scale(1.12) rotate(-8deg);
+}
+.btn-perfiles:focus-visible {
+  outline: 2px solid #f0abfc;
+  outline-offset: 3px;
+}
+.btn-perfiles.abierto {
+  animation: none;
+  background: #1f1530;
+  transform: rotate(90deg);
+}
+@keyframes perfiles-pulso {
+  0% {
+    box-shadow: 0 0 0 0 rgba(192, 38, 211, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(192, 38, 211, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(192, 38, 211, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-perfiles {
+    animation: none;
+  }
 }
 
 /* Contenido encima */

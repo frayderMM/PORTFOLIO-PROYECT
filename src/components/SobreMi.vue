@@ -17,8 +17,6 @@
             <h3>{{ $t('sobreMi.personal.title') }}</h3>
 
             <div class="doc-buttons">
-              <!-- <button @click="scrollToDoc('dni')">🪪 DNI</button> -->
-
               <button @click="scrollToDoc('licencia')">🚗 Lic.</button>
             </div>
           </div>
@@ -58,7 +56,7 @@
         <!-- Intereses -->
         <div class="col">
           <h3>{{ $t('sobreMi.interests.title') }}</h3>
-          <button class="audio-toggle" type="button" @click="audioEnabled = !audioEnabled">
+          <button class="audio-toggle" type="button" @click="toggleAudio">
             {{ audioEnabled ? '🔇 Desactivar audio' : '🔊 Activar audio' }}
           </button>
           <div class="contenedor-intereses">
@@ -111,7 +109,33 @@
               />
             </div>
 
-            <!-- Otros (incluye MUSICA con gif below + audio) -->
+            <!-- MUSICA: clic para reproducir / pausar. El primer cuadro invita a hacer clic -->
+            <button
+              v-else-if="activeInterest === 'MUSICA'"
+              type="button"
+              class="track"
+              :class="{ playing: playingIndex === n, hint: n === 1 && !musicTouched }"
+              :aria-pressed="playingIndex === n"
+              :aria-label="
+                playingIndex === n
+                  ? $t('sobreMi.music.pause', { n })
+                  : $t('sobreMi.music.play', { n })
+              "
+              @click="toggleTrack(n)"
+            >
+              <img :src="getThumbSrc(activeInterest, n)" alt="" />
+              <span class="track-icon" aria-hidden="true">
+                <i :class="playingIndex === n ? 'fa-solid fa-pause' : 'fa-solid fa-play'"></i>
+              </span>
+              <span v-if="playingIndex === n" class="eq" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </span>
+              <span v-if="n === 1 && !musicTouched" class="hint-badge" aria-hidden="true">
+                <i class="fa-solid fa-hand-pointer"></i> {{ $t('sobreMi.music.hint') }}
+              </span>
+            </button>
+
+            <!-- Otros -->
             <img
               v-else
               :src="getThumbSrc(activeInterest, n)"
@@ -139,15 +163,6 @@
     </div>
     <!-- Documentos -->
     <div v-if="activeDoc" class="documentos">
-      <!-- DNI -->
-      <div v-if="activeDoc === 'dni'" id="dni" class="doc-section">
-        <h4>DNI</h4>
-        <div class="doc-imgs">
-          <img src="/img/documentos/DNI/01.png" alt="DNI frontal" />
-          <img src="/img/documentos/DNI/02.png" alt="DNI posterior" />
-        </div>
-      </div>
-
       <!-- Licencia -->
       <div v-if="activeDoc === 'licencia'" id="licencia" class="doc-section">
         <h4>{{ $t('sobreMi.personal.licencia') }}</h4>
@@ -220,6 +235,47 @@ const isGifBelow = computed(() => {
   return cfg?.gifMode === 'below'
 })
 
+// 🎶 MUSICA: reproducción por clic
+const playingIndex = ref(null)
+const musicTouched = ref(false) // se apaga la invitación del primer cuadro tras el primer clic
+
+function toggleTrack(n) {
+  musicTouched.value = true
+
+  // Clic sobre la que está sonando → pausar
+  if (playingIndex.value === n) {
+    stopAudio()
+    gifVisible.value = false
+    return
+  }
+
+  stopAudio()
+  playingIndex.value = n
+
+  if (audioEnabled.value) {
+    const audio = new Audio(`/audio/musica/${n}.mp3`)
+    audio.volume = 0.5
+    audio.onended = () => {
+      if (currentAudio.value === audio) {
+        stopAudio()
+        gifVisible.value = false
+      }
+    }
+    currentAudio.value = audio
+    audio.play().catch((err) => console.warn('Error al reproducir audio:', err))
+  }
+
+  if (animationsEnabled.value) {
+    currentGif.value = `/img/gifs/musica/${n}.gif`
+    gifVisible.value = true
+  }
+}
+
+function toggleAudio() {
+  audioEnabled.value = !audioEnabled.value
+  if (!audioEnabled.value) stopAudio()
+}
+
 // Cambiar interés activo
 function toggleInteres(key) {
   activeInterest.value = activeInterest.value === key ? null : key
@@ -268,6 +324,7 @@ function stopAudio() {
     currentAudio.value.currentTime = 0
     currentAudio.value = null
   }
+  playingIndex.value = null
 }
 
 // Ruta genérica para thumbnails
@@ -535,6 +592,174 @@ ul li span {
 
 .img-hover.show {
   opacity: 1;
+}
+
+/* 🎶 MUSICA: cuadros clicables */
+.track {
+  position: relative;
+  width: 250px;
+  height: 100px;
+  padding: 0;
+  border: 2px solid #070727;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+  overflow: visible;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.imagenes .track img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: none;
+  border-radius: 8px;
+  display: block;
+  filter: brightness(0.75);
+  transition: filter 0.25s ease;
+}
+.imagenes .track img:hover {
+  transform: none;
+}
+.track:hover,
+.track:focus-visible {
+  transform: translateY(-3px);
+  border-color: #1e90ff;
+  outline: none;
+}
+.track:hover img,
+.track.playing img {
+  filter: brightness(1);
+}
+.track.playing {
+  border-color: #00bfff;
+  box-shadow: 0 0 18px rgba(0, 191, 255, 0.55);
+}
+
+/* Botón play/pausa centrado */
+.track-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 42px;
+  height: 42px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(12, 16, 27, 0.75);
+  border: 2px solid #00bfff;
+  color: #fff;
+  font-size: 15px;
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease;
+}
+.track-icon .fa-play {
+  margin-left: 3px; /* centrado óptico del triángulo */
+}
+.track:hover .track-icon {
+  transform: translate(-50%, -50%) scale(1.12);
+  background: #00bfff;
+}
+
+/* Invitación en el primer cuadro: anillo que late + ícono que rebota + etiqueta */
+.track.hint {
+  border-color: #00bfff;
+  animation: hint-ring 1.8s ease-out infinite;
+}
+.track.hint .track-icon {
+  animation: hint-pop 1.8s ease-in-out infinite;
+}
+.hint-badge {
+  position: absolute;
+  top: -14px;
+  right: -10px;
+  z-index: 2;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #00bfff;
+  color: #0c101b;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  animation: hint-bounce 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hint-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 191, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(0, 191, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 191, 255, 0);
+  }
+}
+@keyframes hint-pop {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+}
+@keyframes hint-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Ecualizador animado mientras suena */
+.eq {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 16px;
+}
+.eq span {
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
+  background: #00eaff;
+  transform-origin: bottom;
+  animation: eq 0.9s ease-in-out infinite;
+}
+.eq span:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.eq span:nth-child(3) {
+  animation-delay: -0.6s;
+}
+@keyframes eq {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track.hint,
+  .track.hint .track-icon,
+  .hint-badge,
+  .eq span {
+    animation: none;
+  }
 }
 
 /* 🎶 MUSICA: gif debajo */

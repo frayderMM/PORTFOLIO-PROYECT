@@ -3,6 +3,19 @@
 
 import { defineConfig } from '#q-app/wrappers'
 import { fileURLToPath } from 'node:url'
+import { execSync } from 'node:child_process'
+
+// Fecha de creación del sitio (primer commit: 16 ago 2025)
+const SITE_CREATED = '2025-08-16'
+
+// Última actualización = fecha del último commit (o la fecha del build si no hay git)
+function lastUpdate() {
+  try {
+    return execSync('git log -1 --format=%cI', { encoding: 'utf8' }).trim()
+  } catch {
+    return new Date().toISOString()
+  }
+}
 
 export default defineConfig((ctx) => {
   return {
@@ -35,7 +48,10 @@ export default defineConfig((ctx) => {
 
       // publicPath: '/',
       // analyze: true,
-      // env: {},
+      env: {
+        SITE_CREATED,
+        SITE_UPDATED: lastUpdate(),
+      },
       // rawDefine: {}
       // ignorePublicFolder: true,
       // minify: false,
