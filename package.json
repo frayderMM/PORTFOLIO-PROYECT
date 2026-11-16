@@ -17,6 +17,7 @@
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "@google/model-viewer": "^4.1.0",
+    "@netlify/blobs": "^11.1.9",
     "@quasar/extras": "^1.17.0",
     "axios": "^1.2.1",
     "pinia": "^3.0.1",

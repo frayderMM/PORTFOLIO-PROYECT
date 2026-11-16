@@ -1,8 +1,10 @@
 <script setup>
 import { ref, nextTick, computed } from 'vue'
 import { useLang } from 'src/composables/useLang'
+import NotasSecretas from './NotasSecretas.vue'
 
 const menuVisible = ref(false)
+const notasAbiertas = ref(false)
 const { locale, toggleLanguage } = useLang()
 
 const languageLabel = computed(() => {
@@ -27,7 +29,10 @@ function scrollTo(id) {
     <header>
       <div class="logo">
         <a href="#">FRAYDER</a>
+        <!-- Botón secreto: abre mis notas (protegidas con clave) -->
+        <button type="button" class="punto-secreto" aria-label="Notas" @click="notasAbiertas = true"></button>
       </div>
+      <NotasSecretas :abierto="notasAbiertas" @cerrar="notasAbiertas = false" />
 
       <nav :class="{ responsive: menuVisible }" id="nav">
         <ul>
@@ -87,6 +92,32 @@ header {
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Punto casi invisible: solo yo sé que está ahí */
+.punto-secreto {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #1e90ff;
+  opacity: 0.12;
+  cursor: default;
+  align-self: flex-end;
+  margin-bottom: 9px;
+  transition: opacity 0.3s;
+}
+.punto-secreto:hover,
+.punto-secreto:focus-visible {
+  opacity: 0.5;
+  outline: none;
 }
 
 .logo a {
