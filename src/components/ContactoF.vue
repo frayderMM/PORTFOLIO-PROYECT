@@ -6,7 +6,30 @@
       <div class="fila">
         <!-- Formulario -->
         <div class="col">
-          <form @submit.prevent="enviarMensaje" novalidate>
+          <!-- Ya envió un mensaje: se bloquea el formulario por 24 h -->
+          <div v-if="bloqueado" class="aviso-enviado" role="status">
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            <h3>{{ $t('contact.limit.title') }}</h3>
+            <p>{{ $t('contact.limit.text', { tiempo: tiempoRestante }) }}</p>
+            <a :href="`mailto:${EMAIL}`" class="aviso-link">
+              <i class="fa-solid fa-envelope" aria-hidden="true"></i> {{ EMAIL }}
+            </a>
+          </div>
+
+          <form v-else @submit.prevent="enviarMensaje" novalidate>
+            <!-- Trampa para bots: campo invisible que una persona no llena -->
+            <div class="hp" aria-hidden="true">
+              <label for="sitio-web">Sitio web</label>
+              <input
+                id="sitio-web"
+                v-model="trampa"
+                type="text"
+                name="sitio_web"
+                tabindex="-1"
+                autocomplete="off"
+              />
+            </div>
+
             <div class="form-group" :class="{ error: errors.nombre }">
               <input
                 type="text"
@@ -126,7 +149,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import emailjs from '@emailjs/browser'
 
@@ -156,6 +179,54 @@ const errors = ref({ nombre: '', telefono: '', email: '', tema: '', mensaje: '' 
 const enviando = ref(false)
 const exito = ref(false)
 const errorMsg = ref('')
+
+/** 🛡️ Protección anti-spam
+ *  - 1 mensaje por navegador cada 24 horas
+ *  - Campo trampa (honeypot) para bots
+ *  - Tiempo mínimo para completar el formulario
+ *  Nota: es protección del lado del navegador. Para un límite estricto,
+ *  activa también reCAPTCHA en la plantilla de EmailJS.
+ */
+const LIMITE_MS = 24 * 60 * 60 * 1000
+const TIEMPO_MIN_MS = 3000
+const CLAVE = 'contacto_ultimo_envio'
+
+const trampa = ref('')
+const abiertoEn = Date.now()
+const ultimoEnvio = ref(leerUltimoEnvio())
+const ahora = ref(Date.now())
+let reloj = null
+
+function leerUltimoEnvio() {
+  try {
+    return Number(localStorage.getItem(CLAVE)) || 0
+  } catch {
+    return 0
+  }
+}
+function guardarEnvio() {
+  ultimoEnvio.value = Date.now()
+  try {
+    localStorage.setItem(CLAVE, String(ultimoEnvio.value))
+  } catch {
+    // sin almacenamiento: el bloqueo dura mientras la página esté abierta
+  }
+}
+
+const bloqueado = computed(() => ahora.value - ultimoEnvio.value < LIMITE_MS)
+const tiempoRestante = computed(() => {
+  const ms = Math.max(0, LIMITE_MS - (ahora.value - ultimoEnvio.value))
+  const totalMin = Math.ceil(ms / 60000)
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  if (h === 0) return `${m} min`
+  return m ? `${h} h ${m} min` : `${h} h`
+})
+
+onMounted(() => {
+  reloj = setInterval(() => (ahora.value = Date.now()), 60000)
+})
+onBeforeUnmount(() => clearInterval(reloj))
 
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
@@ -191,9 +262,23 @@ function validar() {
 
 /** ✉️ Envío con EmailJS */
 async function enviarMensaje() {
+  if (enviando.value) return // evita doble envío
   exito.value = false
   errorMsg.value = ''
+
+  // Bot: llenó el campo trampa → se simula éxito sin enviar nada
+  if (trampa.value) {
+    exito.value = true
+    form.value = { nombre: '', telefono: '', email: '', tema: '', mensaje: '' }
+    return
+  }
+  ahora.value = Date.now()
+  if (bloqueado.value) return
   if (!validar()) return
+  if (Date.now() - abiertoEn < TIEMPO_MIN_MS) {
+    errorMsg.value = t('contact.errors.tooFast')
+    return
+  }
 
   if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
     errorMsg.value = 'Configuración de correo no disponible. Revisa las variables de entorno.'
@@ -214,6 +299,8 @@ async function enviarMensaje() {
 
     exito.value = true
     form.value = { nombre: '', telefono: '', email: '', tema: '', mensaje: '' }
+    // Deja ver el mensaje de éxito un momento y luego bloquea el formulario
+    setTimeout(guardarEnvio, 2500)
   } catch (e) {
     console.error('EmailJS error:', e)
     errorMsg.value = 'Ocurrió un error al enviar. Inténtalo nuevamente.'
@@ -473,5 +560,52 @@ button:disabled {
   .contacto h2 {
     font-size: 32px;
   }
+}
+/* 🛡️ Campo trampa: fuera de la vista (no usar display:none, algunos bots lo detectan) */
+.hp {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Aviso de mensaje ya enviado */
+.aviso-enviado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 24px;
+  border-radius: 16px;
+  text-align: center;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+.aviso-enviado > i {
+  font-size: 40px;
+  color: #4ade80;
+}
+.aviso-enviado h3 {
+  margin: 0;
+  font-size: 20px;
+}
+.aviso-enviado p {
+  margin: 0;
+  color: #c9d3e3;
+  line-height: 1.6;
+}
+.aviso-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: #00bfff;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-all;
+}
+.aviso-link:hover {
+  text-decoration: underline;
 }
 </style>

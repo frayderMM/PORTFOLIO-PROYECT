@@ -225,7 +225,12 @@ export default {
     toast: {
       success: '✅ ¡Mensaje enviado correctamente!',
     },
+    limit: {
+      title: '¡Gracias! Ya recibí tu mensaje',
+      text: 'Te responderé lo antes posible. Para evitar mensajes repetidos, podrás enviar otro en {tiempo}. Si es urgente, escríbeme directamente:',
+    },
     errors: {
+      tooFast: 'Tómate un momento para revisar tu mensaje antes de enviarlo.',
       nameRequired: 'Ingresa tu nombre.',
       phoneRequired: 'Ingresa tu número.',
       emailInvalid: 'Correo no válido.',

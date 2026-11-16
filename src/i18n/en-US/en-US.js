@@ -227,7 +227,12 @@ export default {
     toast: {
       success: '✅ Message sent successfully!',
     },
+    limit: {
+      title: 'Thanks! I got your message',
+      text: "I'll reply as soon as possible. To avoid duplicates, you can send another one in {tiempo}. If it's urgent, email me directly:",
+    },
     errors: {
+      tooFast: 'Take a moment to review your message before sending it.',
       nameRequired: 'Please enter your name.',
       phoneRequired: 'Please enter your phone number.',
       emailInvalid: 'Invalid email address.',
