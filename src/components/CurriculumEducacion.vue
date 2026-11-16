@@ -5,7 +5,7 @@
         <li v-for="(id, index) in cursos" :key="index" :style="getAnimationDelay(index)">
           <div class="card" :style="getAnimationDelay(index)" @click="seleccionarCurso(id)">
             <span class="model-name">{{ $t('curriculumEdu.courseLabel', { n: index + 1 }) }}</span>
-            <span>{{ $t(`curriculumEdu.courses.${id}.name`) }}</span>
+            <span>{{ l(infoCursos[id]?.name) }}</span>
             <span class="seleccion-icono">✔</span>
           </div>
         </li>
@@ -15,148 +15,133 @@
     </div>
 
     <div class="mask">
-      <div v-if="cursoSeleccionado" class="contenido-curso">
-        <div class="contenido-header">
-          <h2>{{ $t(`curriculumEdu.courses.${cursoSeleccionado}.name`) }}</h2>
-          <button
-            class="cerrar"
-            @click="cursoSeleccionado = null"
-            :aria-label="$t('curriculumEdu.close')"
-          >
-            ✕
-          </button>
+      <Transition name="panel" mode="out-in">
+        <!-- Resumen del ciclo (sin curso seleccionado) -->
+        <div v-if="!cursoSeleccionado" :key="'ciclo-' + periodoActual.periodo" class="panel">
+          <div class="panel-top">
+            <span class="kicker">
+              {{ periodoActual.ciclo ? `${$t('curriculumEdu.cycle')} ${periodoActual.ciclo}` : $t('curriculumEdu.summer') }}
+            </span>
+            <span v-if="periodoActual.enCurso" class="badge-curso">{{ $t('curriculumEdu.inProgress') }}</span>
+          </div>
+          <h3 class="panel-titulo">{{ periodoActual.periodo }}</h3>
+          <p class="panel-sub">
+            {{ $t('curriculumEdu.coursesCount', { n: cursos.length }) }} · {{ $t('curriculumEdu.selectHint') }}
+          </p>
+
+          <div class="lista-cursos">
+            <button
+              v-for="(id, i) in cursos"
+              :key="id"
+              type="button"
+              class="item-curso"
+              @click="seleccionarCurso(id)"
+            >
+              <span class="num">{{ String(i + 1).padStart(2, '0') }}</span>
+              <span class="nombre">{{ l(infoCursos[id]?.name) }}</span>
+              <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="avance">
+            <div class="avance-top">
+              <span>{{ $t('curriculumEdu.progress') }}</span>
+              <span>{{ $t('curriculumEdu.totalCourses', { n: totalCursos }) }}</span>
+            </div>
+            <div class="avance-barra" role="group" :aria-label="$t('curriculumEdu.progress')">
+              <button
+                v-for="(per, i) in periodos"
+                :key="per.periodo"
+                type="button"
+                class="segmento"
+                :class="{ actual: i === indice, encurso: per.enCurso, verano: !per.ciclo }"
+                :title="per.periodo"
+                :aria-label="per.periodo"
+                :aria-current="i === indice ? 'true' : undefined"
+                @click="irAPeriodo(i)"
+              ></button>
+            </div>
+            <div class="avance-extremos">
+              <span>{{ periodos[0].periodo }}</span>
+              <span>{{ periodos[periodos.length - 1].periodo }}</span>
+            </div>
+          </div>
         </div>
-        <p>
-          {{
-            $t(
-              `curriculumEdu.courses.${cursoSeleccionado}.desc`,
-              {},
-              { default: $t('curriculumEdu.noDescription') },
-            )
-          }}
-        </p>
-      </div>
+
+        <!-- Detalle de un curso -->
+        <div v-else :key="'curso-' + cursoSeleccionado" class="panel panel-curso">
+          <div class="panel-top">
+            <button type="button" class="volver" @click="cursoSeleccionado = null">
+              <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> {{ $t('curriculumEdu.back') }}
+            </button>
+            <button type="button" class="cerrar" :aria-label="$t('curriculumEdu.close')" @click="cursoSeleccionado = null">
+              ✕
+            </button>
+          </div>
+          <span class="kicker">
+            {{ $t('curriculumEdu.courseOf', { n: posCurso + 1, total: cursos.length }) }} · {{ periodoActual.periodo }}
+          </span>
+          <h3 class="panel-titulo curso-titulo">{{ l(infoCursos[cursoSeleccionado]?.name) }}</h3>
+          <p class="desc">
+            {{ l(infoCursos[cursoSeleccionado]?.desc) || $t('curriculumEdu.noDescription') }}
+          </p>
+          <template v-if="infoCursos[cursoSeleccionado]?.temas">
+            <h4 class="temas-titulo">{{ $t('curriculumEdu.topics') }}</h4>
+            <div class="temas">
+              <span v-for="t in l(infoCursos[cursoSeleccionado].temas)" :key="t" class="tema">{{ t }}</span>
+            </div>
+            <p class="fuente">
+              <i class="fa-solid fa-file-lines" aria-hidden="true"></i> {{ $t('curriculumEdu.source') }}
+            </p>
+          </template>
+          <div class="nav-cursos">
+            <button type="button" :disabled="posCurso === 0" @click="moverCurso(-1)">
+              <i class="fa-solid fa-chevron-left" aria-hidden="true"></i> {{ $t('curriculumEdu.prevCourse') }}
+            </button>
+            <button type="button" :disabled="posCurso === cursos.length - 1" @click="moverCurso(1)">
+              {{ $t('curriculumEdu.nextCourse') }} <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </Transition>
     </div>
 
     <div class="center-circle">
-      <div class="circle-label">{{ $t('curriculumEdu.cycle') }}</div>
-      <div class="carousel-controls">
-        <span class="arrow" @click="cambiarCiclo(-1)" :aria-label="$t('curriculumEdu.prev')"
-          >‹</span
-        >
-        <span>{{ cicloActual }}</span>
-        <span class="arrow" @click="cambiarCiclo(1)" :aria-label="$t('curriculumEdu.next')">›</span>
+      <div class="circle-label">
+        {{ periodoActual.ciclo ? `${$t('curriculumEdu.cycle')} ${periodoActual.ciclo}` : $t('curriculumEdu.summer') }}
       </div>
+      <div class="carousel-controls">
+        <button type="button" class="arrow" :aria-label="$t('curriculumEdu.prev')" @click="cambiarCiclo(-1)">
+          ‹
+        </button>
+        <span class="periodo">{{ periodoActual.periodo }}</span>
+        <button type="button" class="arrow" :aria-label="$t('curriculumEdu.next')" @click="cambiarCiclo(1)">
+          ›
+        </button>
+      </div>
+      <span v-if="periodoActual.enCurso" class="en-curso">{{ $t('curriculumEdu.inProgress') }}</span>
+      <span class="contador">{{ indice + 1 }} / {{ periodos.length }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-// import { useI18n } from 'vue-i18n'
+import { periodos, cursos as infoCursos } from 'src/data/cursos'
+import { useLocalized } from 'src/composables/useLocalized'
 
-// const { t } = useI18n()
+const { l } = useLocalized()
 
-const cicloActual = ref(1)
+// Empieza en el ciclo actual (el último periodo)
+const indice = ref(periodos.length - 1)
 const cursoSeleccionado = ref(null)
 
-// Mapa de cursos por ciclo usando IDs (slugs)
-const cursosPorCiclo = {
-  1: [
-    'lectura_redaccion',
-    'pre_calculo',
-    'administracion_general',
-    'globalizacion_realidad_nacional',
-    'estrategias_aprendizaje',
-    'habilidades_actitudinales',
-    'basic_english',
-  ],
-  2: [
-    'comunicacion_literatura_i',
-    'calculo_i',
-    'contabilidad_general',
-    'estadistica_probabilidades',
-    'fisica_i',
-    'fundamentos_programacion',
-    'intermediate_english_i',
-  ],
-  3: [
-    'comunicacion_literatura_ii',
-    'calculo_ii',
-    'base_datos',
-    'intro_ciencia_datos',
-    'fundamentos_logica',
-    'algoritmos_estructura_datos',
-    'intermediate_english_ii',
-  ],
-  4: [
-    'marketing_ingenieria',
-    'costos_presupuestos',
-    'algebra_lineal_i',
-    'estadistica_inferencial',
-    'arquitectura_computador_i',
-    'programacion_oo',
-    'intermediate_english_iii',
-  ],
-  5: [
-    'investigacion_operativa_i',
-    'matematica_discreta',
-    'ingenieria_software_i',
-    'analisis_multivariado_i',
-    'sistemas_operativos_i',
-    'analisis_diseno_algoritmos',
-  ],
-  6: [
-    'metodologia_investigacion',
-    'gestion_financiera',
-    'inteligencia_artificial',
-    'analisis_multivariado_ii',
-    'redes_comunicaciones',
-    'ingenieria_procesos_negocio',
-  ],
-  7: [
-    'planeacion_estrategica',
-    'ia_avanzada',
-    'computacion_grafica',
-    'mineria_datos',
-    'robotica',
-    'computacion_paralela',
-  ],
-  8: [
-    'gestion_innovacion_etica',
-    'entrepreneurship',
-    'desarrollo_web',
-    'mineria_datos_avanzada',
-    'diseno_evaluacion_proyectos',
-    'big_data_analytics',
-    'electivo_especialidad_i',
-  ],
-  9: [
-    'inteligencia_negocios',
-    'computacion_nube',
-    'tesis_i',
-    'desarrollo_moviles',
-    'analitica_web',
-    'project_management',
-    'electivo_especialidad_ii',
-  ],
-  10: [
-    'knowledge_management',
-    'sgsi',
-    'sistemas_informacion_gerencial',
-    'it_management',
-    'enterprise_architecture_management',
-    'electivo_especialidad_iii',
-    'tesis_ii',
-  ],
-}
-
-const cursos = computed(() => cursosPorCiclo[cicloActual.value] || [])
+const periodoActual = computed(() => periodos[indice.value])
+const cursos = computed(() => periodoActual.value?.cursos || [])
 
 function cambiarCiclo(direccion) {
-  cicloActual.value += direccion
-  if (cicloActual.value < 1) cicloActual.value = 10
-  if (cicloActual.value > 10) cicloActual.value = 1
+  indice.value = (indice.value + direccion + periodos.length) % periodos.length
+  cursoSeleccionado.value = null
 }
 
 function getAnimationDelay(index) {
@@ -167,6 +152,19 @@ function getAnimationDelay(index) {
 
 function seleccionarCurso(id) {
   cursoSeleccionado.value = id
+}
+
+const totalCursos = periodos.reduce((acc, p) => acc + p.cursos.length, 0)
+const posCurso = computed(() => cursos.value.indexOf(cursoSeleccionado.value))
+
+function moverCurso(delta) {
+  const i = posCurso.value + delta
+  if (i >= 0 && i < cursos.value.length) cursoSeleccionado.value = cursos.value[i]
+}
+
+function irAPeriodo(i) {
+  indice.value = i
+  cursoSeleccionado.value = null
 }
 </script>
 
@@ -372,55 +370,10 @@ li {
   );
 }
 
-.contenido-curso {
-  position: absolute;
-  top: 10%;
-  left: 0;
-  width: 98%;
-  height: auto;
-  max-height: 40%;
-  padding: 20px 24px;
-  box-sizing: border-box;
-  color: #ffffff;
-  font-family: inherit;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  border-bottom-right-radius: 20px;
-  border-top-right-radius: 12px;
-  z-index: 1;
-  pointer-events: auto;
-  animation: slideFadeIn 0.5s ease-out forwards;
-  backdrop-filter: blur(6px);
-  overflow: hidden;
-}
 
-.contenido-curso h2 {
-  font-size: 20px;
-  color: #00bfff;
-  margin: 0;
-}
 
-.contenido-curso p {
-  font-size: 15px;
-  line-height: 1.6;
-  color: #ccc;
-  margin: 0;
-}
 
-.cerrar {
-  background: none;
-  border: none;
-  color: #00bfff;
-  font-size: 20px;
-  align-self: flex-end;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
 
-.cerrar:hover {
-  color: #ffffff;
-}
 
 @keyframes slideFadeIn {
   from {
@@ -447,5 +400,337 @@ li {
 .card:hover .seleccion-icono {
   opacity: 1;
   transform: scale(1);
+}
+/* Periodo real (ej. 2026-2) y estado */
+.arrow {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  font-family: inherit;
+}
+.periodo {
+  font-family: 'Righteous', sans-serif;
+  font-size: 26px;
+  color: #fff;
+}
+.en-curso {
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+.contador {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #6b7a93;
+}
+/* ================= Panel izquierdo ================= */
+.panel {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: calc(100% - 150px);
+  max-height: 88%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  box-sizing: border-box;
+  border-radius: 20px;
+  background: rgba(16, 22, 36, 0.85);
+  border: 1px solid rgba(0, 191, 255, 0.18);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #00bfff transparent;
+  text-align: left;
+  z-index: 3;
+}
+.panel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #00bfff;
+}
+.badge-curso {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+.panel-titulo {
+  margin: 0;
+  font-family: 'Righteous', sans-serif;
+  font-size: 40px;
+  line-height: 1.05;
+  color: #fff;
+}
+.curso-titulo {
+  font-size: 24px;
+  line-height: 1.25;
+}
+.panel-sub {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: #8b97ad;
+}
+
+/* Lista de cursos del ciclo */
+.lista-cursos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.item-curso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: #e6f1ff;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
+}
+.item-curso:hover,
+.item-curso:focus-visible {
+  background: rgba(0, 191, 255, 0.12);
+  border-color: rgba(0, 191, 255, 0.5);
+  transform: translateX(4px);
+  outline: none;
+}
+.item-curso .num {
+  flex-shrink: 0;
+  font-family: 'Righteous', sans-serif;
+  font-size: 13px;
+  color: #00bfff;
+}
+.item-curso .nombre {
+  flex: 1;
+  line-height: 1.35;
+}
+.item-curso i {
+  font-size: 11px;
+  color: #4b5873;
+  transition: color 0.2s;
+}
+.item-curso:hover i {
+  color: #00bfff;
+}
+
+/* Avance de la carrera */
+.avance {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.avance-top,
+.avance-extremos {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #8b97ad;
+}
+.avance-top {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.avance-extremos {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #5d6a82;
+}
+.avance-barra {
+  display: flex;
+  gap: 4px;
+}
+.segmento {
+  flex: 1;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #1e90ff, #00bfff);
+  opacity: 0.45;
+  cursor: pointer;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+.segmento.verano {
+  flex: 0.4;
+}
+.segmento.encurso {
+  background: repeating-linear-gradient(45deg, #22c55e, #22c55e 4px, #15803d 4px, #15803d 8px);
+}
+.segmento:hover {
+  opacity: 0.8;
+}
+.segmento.actual {
+  opacity: 1;
+  transform: scaleY(1.5);
+  box-shadow: 0 0 10px rgba(0, 191, 255, 0.6);
+}
+
+/* Detalle del curso */
+.volver,
+.cerrar {
+  background: none;
+  border: none;
+  color: #00bfff;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cerrar {
+  font-size: 18px;
+}
+.volver:hover,
+.cerrar:hover {
+  color: #fff;
+}
+.desc {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #c9d3e3;
+}
+.temas-titulo {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #00bfff;
+}
+.temas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tema {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #e6f1ff;
+  background: rgba(0, 191, 255, 0.12);
+  border: 1px solid rgba(0, 191, 255, 0.4);
+}
+.fuente {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #6b7a93;
+}
+.nav-cursos {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.nav-cursos button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 191, 255, 0.4);
+  background: none;
+  color: #e6f1ff;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.nav-cursos button:hover:not(:disabled) {
+  background: rgba(0, 191, 255, 0.15);
+}
+.nav-cursos button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Transición entre ciclo y curso */
+.panel-enter-active,
+.panel-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+.panel-enter-from {
+  opacity: 0;
+  transform: translate(-16px, -50%);
+}
+.panel-leave-to {
+  opacity: 0;
+  transform: translate(16px, -50%);
+}
+
+/* Celular y tablet: el panel pasa debajo del círculo */
+@media (max-width: 900px) {
+  .void {
+    aspect-ratio: auto;
+    container-type: inline-size;
+  }
+  .center-circle {
+    top: 50cqw;
+    width: 160px;
+  }
+  .mask {
+    position: relative;
+    width: 100%;
+    animation: none;
+    background: none;
+  }
+  .mask:after {
+    display: none;
+  }
+  .panel {
+    position: relative;
+    top: auto;
+    width: 100%;
+    max-height: none;
+    transform: none;
+  }
+  .panel-enter-from,
+  .panel-leave-to {
+    transform: translateY(8px);
+  }
+  .panel-titulo {
+    font-size: 32px;
+  }
 }
 </style>

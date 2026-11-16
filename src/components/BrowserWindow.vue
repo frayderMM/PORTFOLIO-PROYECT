@@ -121,7 +121,6 @@ onBeforeUnmount(() => {
   border-radius: 22px;
   overflow: hidden;
   background: #0c101b;
-  border: 2px solid rgba(255, 255, 255, 0.85);
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.55),
     0 0 0 1px rgba(0, 0, 0, 0.3);

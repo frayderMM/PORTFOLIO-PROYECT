@@ -1,185 +1,200 @@
 <template>
-  <div class="derecha">
-    <!-- Usa la clave del padre o crea una local -->
-    <h3>{{ $t('curriculum.experience') }}</h3>
-
-    <div class="carrusel">
-      <button
-        class="nav-btn"
-        @click="prevItem"
-        :disabled="indiceActual === 0"
-        :aria-label="$t('curriculumExp.prev')"
-      >
-        ‹
-      </button>
-
-      <div class="item der">
-        <h4>{{ $t(`curriculumExp.items.${currentId}.title`) }}</h4>
-        <span class="casa">{{ $t(`curriculumExp.items.${currentId}.company`) }}</span>
-        <span class="fecha">{{ $t(`curriculumExp.items.${currentId}.date`) }}</span>
-        <p>{{ $t(`curriculumExp.items.${currentId}.desc`) }}</p>
-        <div class="conectord">
-          <div class="circulod"></div>
+  <ol class="timeline">
+    <li v-for="(e, i) in experience" :key="i" class="evento" :class="{ actual: !e.end && e.start.includes('-') }">
+      <span class="punto" aria-hidden="true"></span>
+      <article class="card">
+        <div class="cabecera">
+          <img v-if="e.logo" class="logo" :src="e.logo" alt="" />
+          <span v-else class="logo logo-icono" aria-hidden="true"><i class="fa-solid fa-briefcase"></i></span>
+          <div class="titulos">
+            <h4>{{ l(e.role) }}</h4>
+            <span class="org">{{ l(e.org) }}</span>
+          </div>
+          <span v-if="!e.end && e.start.includes('-')" class="badge-actual">{{ $t('trayectoria.current') }}</span>
         </div>
-      </div>
-
-      <button
-        class="nav-btn"
-        @click="nextItem"
-        :disabled="indiceActual === items.length - 1"
-        :aria-label="$t('curriculumExp.next')"
-      >
-        ›
-      </button>
-    </div>
-  </div>
+        <p class="fecha">
+          <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+          {{ periodo(e) }}
+        </p>
+        <p class="desc">{{ l(e.desc) }}</p>
+        <ul v-if="e.tech?.length" class="tags">
+          <li v-for="t in e.tech" :key="t">{{ t }}</li>
+        </ul>
+      </article>
+    </li>
+  </ol>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { experience } from 'src/data/trayectoria'
+import { useLocalized } from 'src/composables/useLocalized'
 
-// Lista por ID (sin textos hardcodeados)
-const items = [
-  { id: 'promcoser_platform' },
-  { id: 'minsur_website_redesign' },
-  { id: 'inventory_system' },
-  { id: 'crypto_software' },
-  { id: 'excel_vba_books' },
-  { id: 'sales_dashboard' },
-  { id: 'personal_portfolio' },
-]
+const { l } = useLocalized()
+const { t, locale } = useI18n()
 
-const indiceActual = ref(0)
-const currentId = computed(() => items[indiceActual.value]?.id ?? items[0].id)
-
-const nextItem = () => {
-  if (indiceActual.value < items.length - 1) indiceActual.value++
+function mesAnio(ym) {
+  const [y, m] = ym.split('-').map(Number)
+  return new Date(y, m - 1, 1).toLocaleDateString(locale.value === 'es' ? 'es-PE' : 'en-US', {
+    month: 'short',
+    year: 'numeric',
+  })
 }
-const prevItem = () => {
-  if (indiceActual.value > 0) indiceActual.value--
+
+// "abr. 2026 – actualidad · 8 meses" | "2024 – 2025" | "2025"
+function periodo(e) {
+  if (!e.start.includes('-')) return e.end ? `${e.start} – ${e.end}` : e.start
+  const inicio = mesAnio(e.start)
+  if (e.end) return `${inicio} – ${mesAnio(e.end)}`
+  const [y, m] = e.start.split('-').map(Number)
+  const hoy = new Date()
+  const total = (hoy.getFullYear() - y) * 12 + (hoy.getMonth() + 1 - m) + 1
+  const anios = Math.floor(total / 12)
+  const meses = total % 12
+  const partes = []
+  if (anios) partes.push(`${anios} ${t(anios === 1 ? 'hero.profiles.year' : 'hero.profiles.years')}`)
+  if (meses) partes.push(`${meses} ${t(meses === 1 ? 'hero.profiles.month' : 'hero.profiles.months')}`)
+  return `${inicio} – ${t('hero.profiles.present')} · ${partes.join(' ')}`
 }
 </script>
 
 <style scoped>
-.derecha {
-  background-color: #0c101b;
-  width: 100%;
-  max-width: 100%;
-  margin: 3em auto;
-  border-radius: 40px;
-  padding: 3em 4em;
-  color: white;
-  font-family: 'Work Sans', sans-serif;
-  box-shadow: 0 0 15px rgba(0, 140, 187, 0.3);
+.timeline {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 34px;
+  text-align: left;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(#00bfff, rgba(0, 191, 255, 0.08));
+}
+.evento {
+  position: relative;
+  margin-bottom: 18px;
+}
+.punto {
+  position: absolute;
+  left: -30px;
+  top: 22px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0c101b;
+  border: 3px solid #00bfff;
+}
+.evento.actual .punto {
+  background: #00bfff;
+  box-shadow: 0 0 0 5px rgba(0, 191, 255, 0.2);
+  animation: latido 2s ease-out infinite;
+}
+@keyframes latido {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 191, 255, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgba(0, 191, 255, 0);
+  }
 }
 
-.derecha h3 {
-  font-size: 40px;
-  font-family: 'Righteous', sans-serif;
-  margin-bottom: 2em;
-  color: #00bfff;
-  text-align: center;
+.card {
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #101624;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 4px solid #00bfff;
+  transition: border-color 0.2s;
 }
-
-.carrusel {
+.card:hover {
+  border-color: rgba(0, 191, 255, 0.45);
+}
+.cabecera {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1em;
+  gap: 12px;
 }
-
-.nav-btn {
-  background: none;
-  border: none;
+.logo {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+.logo-icono {
+  display: grid;
+  place-items: center;
+  background: rgba(0, 191, 255, 0.12);
   color: #00bfff;
-  font-size: 2.5em;
-  cursor: pointer;
-  transition: 0.2s ease;
 }
-
-.nav-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.item.der {
+.titulos {
   flex: 1;
-  position: relative;
-  margin-bottom: 2.5em;
-  padding: 1.5em 2em;
-  border-left: 4px solid #00bfff;
-  background-color: #101624;
-  border-radius: 25px;
-  text-align: left;
   min-width: 0;
 }
-
-.item.der h4 {
-  font-size: 24px;
-  color: #00bfff;
+h4 {
+  margin: 0;
+  font-size: 18px;
   font-family: 'Righteous', sans-serif;
-  margin-bottom: 0.3em;
+  font-weight: 400;
+  color: #00bfff;
+  line-height: 1.25;
 }
-
-.item.der .casa {
-  font-weight: bold;
-  font-size: 16px;
-  margin-bottom: 0.2em;
-  display: block;
-}
-
-.item.der .fecha {
+.org {
+  font-weight: 600;
   font-size: 14px;
-  color: #aaa;
-  margin-bottom: 1em;
-  display: block;
 }
-
-.item.der p {
-  font-size: 16px;
-  line-height: 1.6;
+.badge-actual {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 600;
 }
-
-.conectord {
-  position: absolute;
-  left: -14px;
-  top: 1.5em;
-  width: 24px;
-  height: 24px;
-  background: #0c101b;
+.fecha {
+  margin: 10px 0 6px;
+  font-size: 13px;
+  color: #aab3c5;
+}
+.fecha i {
+  margin-right: 6px;
+}
+.desc {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.tags {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tags li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(0, 191, 255, 0.1);
+  border: 1px solid rgba(0, 191, 255, 0.3);
 }
 
-.circulod {
-  width: 12px;
-  height: 12px;
-  background-color: #00bfff;
-  border-radius: 50%;
-  border: 2px solid #0c101b;
+@media (max-width: 600px) {
+  .cabecera {
+    flex-wrap: wrap;
+  }
 }
-
-@media screen and (max-width: 768px) {
-  .derecha {
-    max-width: 95%;
-    padding: 2em;
-  }
-
-  .derecha h3 {
-    font-size: 28px;
-  }
-
-  .item.der {
-    padding: 1em;
-  }
-
-  .item.der h4 {
-    font-size: 20px;
-  }
-
-  .nav-btn {
-    font-size: 2em;
+@media (prefers-reduced-motion: reduce) {
+  .evento.actual .punto {
+    animation: none;
   }
 }
 </style>

@@ -17,6 +17,8 @@
             <h3>{{ $t('sobreMi.personal.title') }}</h3>
 
             <div class="doc-buttons">
+              <!-- <button @click="scrollToDoc('dni')">🪪 DNI</button> -->
+
               <button @click="scrollToDoc('licencia')">🚗 Lic.</button>
             </div>
           </div>
@@ -163,6 +165,15 @@
     </div>
     <!-- Documentos -->
     <div v-if="activeDoc" class="documentos">
+      <!-- DNI -->
+      <div v-if="activeDoc === 'dni'" id="dni" class="doc-section">
+        <h4>DNI</h4>
+        <div class="doc-imgs">
+          <img src="/img/documentos/DNI/01.png" alt="DNI frontal" />
+          <img src="/img/documentos/DNI/02.png" alt="DNI posterior" />
+        </div>
+      </div>
+
       <!-- Licencia -->
       <div v-if="activeDoc === 'licencia'" id="licencia" class="doc-section">
         <h4>{{ $t('sobreMi.personal.licencia') }}</h4>

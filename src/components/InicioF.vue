@@ -18,20 +18,20 @@
 
     <!-- Contenido encima -->
     <div class="contenido-banner">
-      <!-- Botón: abre las ventanas de LinkedIn y GitHub -->
+      <!-- Check: al marcarlo se abren las ventanas de LinkedIn y GitHub -->
       <button
         type="button"
+        role="checkbox"
         class="btn-perfiles"
         :class="{ abierto: perfilesAbiertos }"
-        :aria-expanded="perfilesAbiertos"
-        :aria-label="perfilesAbiertos ? $t('hero.profiles.close') : $t('hero.profiles.open')"
+        :aria-checked="perfilesAbiertos"
+        :aria-label="$t('hero.profiles.open')"
         :title="perfilesAbiertos ? $t('hero.profiles.close') : $t('hero.profiles.open')"
         @click="perfilesAbiertos = !perfilesAbiertos"
       >
-        <i
-          :class="perfilesAbiertos ? 'fa-solid fa-xmark' : 'fa-solid fa-window-restore'"
-          aria-hidden="true"
-        ></i>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12.5l4.5 4.5L19 7.5" />
+        </svg>
       </button>
       <div class="contenedor-img">
         <img src="/img/hero.jpg" alt="Foto de Frayder Meza" loading="lazy" />
@@ -254,53 +254,88 @@ onBeforeUnmount(() => {
   }
 }
 
-/* Botón de perfiles (LinkedIn + GitHub) */
+/* Check de perfiles (LinkedIn + GitHub) */
 .btn-perfiles {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 20px;
+  right: 20px;
   z-index: 3;
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 2px solid #f0abfc;
-  background: linear-gradient(135deg, #c026d3, #7c3aed);
-  color: #fff;
-  font-size: 16px;
+  border: 2px solid #1e90ff;
+  background: rgba(12, 16, 27, 0.9);
   cursor: pointer;
-  box-shadow: 0 0 0 0 rgba(192, 38, 211, 0.7);
   animation: perfiles-pulso 2s ease-out infinite;
   transition:
     transform 0.25s ease,
-    background 0.25s ease;
+    background 0.3s ease,
+    border-color 0.3s ease;
 }
+.btn-perfiles svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* la ✓ empieza "sin dibujar" */
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  transition: stroke-dashoffset 0.35s ease 0.1s;
+}
+/* Al pasar el mouse se insinúa la ✓ para invitar a marcarla */
 .btn-perfiles:hover {
-  transform: scale(1.12) rotate(-8deg);
+  transform: scale(1.12);
+  background: rgba(0, 191, 255, 0.18);
+}
+.btn-perfiles:hover svg {
+  stroke: #7dd3fc;
+  stroke-dashoffset: 11;
 }
 .btn-perfiles:focus-visible {
-  outline: 2px solid #f0abfc;
+  outline: 2px solid #7dd3fc;
   outline-offset: 3px;
 }
+/* Marcado: se rellena y se dibuja la ✓ completa */
 .btn-perfiles.abierto {
-  animation: none;
-  background: #1f1530;
-  transform: rotate(90deg);
+  animation: perfiles-marcado 0.4s ease;
+  background: linear-gradient(135deg, #1e90ff, #00bfff);
+  border-color: #7dd3fc;
+}
+.btn-perfiles.abierto svg {
+  stroke: #fff;
+  stroke-dashoffset: 0;
 }
 @keyframes perfiles-pulso {
   0% {
-    box-shadow: 0 0 0 0 rgba(192, 38, 211, 0.7);
+    box-shadow: 0 0 0 0 rgba(0, 191, 255, 0.7);
   }
   70% {
-    box-shadow: 0 0 0 14px rgba(192, 38, 211, 0);
+    box-shadow: 0 0 0 9px rgba(0, 191, 255, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(192, 38, 211, 0);
+    box-shadow: 0 0 0 0 rgba(0, 191, 255, 0);
+  }
+}
+@keyframes perfiles-marcado {
+  0% {
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .btn-perfiles {
+  .btn-perfiles,
+  .btn-perfiles.abierto {
     animation: none;
   }
 }
